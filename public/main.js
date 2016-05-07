@@ -25,7 +25,8 @@ var YT_PlayerState = {
 
 window.onload = function() {
     //socket = io.connect('http://192.168.8.10:3700');
-    socket = io.connect('http://localhost:3700');
+    //socket = io.connect('http://' + document.domain + ':3700');
+    socket = io.connect(document.location.href);
 
     socket.on('message', function (data) {
         if(data) {
