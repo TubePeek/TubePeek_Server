@@ -1,0 +1,13 @@
+{
+    "name": "LetsWatch",
+    "version": "0.0.0",
+    "description": "Real time video watching with a friend",
+    "dependencies": {
+        "socket.io": "latest",
+        "express": "latest",
+        "jade": "latest",
+        "sequelize": "latest",
+        "hashids": "1.0.1"
+    },
+    "author": "Ariaroo Efe"
+}

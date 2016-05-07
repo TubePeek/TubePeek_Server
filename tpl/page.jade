@@ -1,0 +1,16 @@
+doctype
+html
+  head
+    title= "Real time web chat"
+  body
+    #player
+    br
+    br
+
+    fb:login-button(scope="public_profile,email" onlogin="checkLoginState();")
+
+    #status
+
+    script(src='/socket.io/socket.io.js')
+    script(src='/main.js')
+    script(src='/facebookLoginSetup.js')
