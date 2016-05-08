@@ -2,8 +2,9 @@
 
 var player;
 var socket;
-//var gotFirstMsgFromServer = false;
-var testYoutubeVideoId = "M7lc1UVf-VE";
+//var testYoutubeVideoId = "M7lc1UVf-VE";
+var testYoutubeVideoId = "l-gQLqv9f4o";
+
 var currentUserIdKey = 'currentUserId';
 
 var PossibleActions = {
@@ -19,26 +20,14 @@ var YT_PlayerState = {
   PLAYING : 'PLAYING',
   PAUSED : 'PAUSED',
   ENDED : 'ENDED',
-  CUED : 'CUED'
-}
+  CUED : 'CUED',
+  SEEKING : 'SEEKING'
+};
 
 
 window.onload = function() {
-    //socket = io.connect('http://192.168.8.10:3700');
-    //socket = io.connect('http://' + document.domain + ':3700');
-    socket = io.connect(document.location.href);
-
-    socket.on('message', function (data) {
-        if(data) {
-          console.log("Got message from server: " + JSON.stringify(data))
-          actOnServerMessage(data);
-        } else {
-            console.log("There is a problem!");
-        }
-    });
-
     initializeYoutubePlayer();
-}
+};
 
 function initializeYoutubePlayer() {
     var tag = document.createElement('script');
@@ -64,12 +53,44 @@ function onYouTubeIframeAPIReady() {
 function onPlayerReady(event) {
   //Preventing playing the video immediately
   //event.target.playVideo();
+
+  socket = io.connect(document.location.href);
+  socket.on('message', function (data) {
+      if(data) {
+        console.log("Got message from server: " + JSON.stringify(data))
+        actOnServerMessage(data);
+      } else {
+          console.log("There is a problem!");
+      }
+  });
+  timeTrackForUserSkippingInAVideo();
+}
+
+function timeTrackForUserSkippingInAVideo() {
+  var lastTime = -1;
+  var interval = 1000;
+
+  var checkPlayerTime = function () {
+    if (lastTime != -1) {
+      if(player.getPlayerState() == YT.PlayerState.PLAYING ) {
+        var t = player.getCurrentTime();
+
+        if (Math.abs(t - lastTime - 1) > 0.5) {// there was a seek occuring
+          var event = {};
+          event.data = YT_PlayerState.SEEKING;
+          onPlayerStateChange(event);
+        }
+      }
+    }
+    lastTime = player.getCurrentTime();
+    setTimeout(checkPlayerTime, interval); /// repeat function call in 1 second
+  }
+  setTimeout(checkPlayerTime, interval); /// initial call delayed
 }
 
 function onPlayerStateChange(event) {
-  console.log("Player state change!");
-
   var currentUserId = localStorage.getItem(currentUserIdKey);
+
   if(currentUserId) {
     var dataToReplyWith = {};
     dataToReplyWith.userId = currentUserId;
@@ -85,15 +106,16 @@ function onPlayerStateChange(event) {
       dataToReplyWith.videoState = 'ENDED';
     } else if(event.data == YT.PlayerState.BUFFERING) {
       dataToReplyWith.videoState = 'BUFFERING';
-    } else if(event.data == YT.PlayerState.CUED) {
+    } else if(event.data == YT.PlayerState.CUED) {//5
       dataToReplyWith.videoState = 'CUED';
+    } else if(event.data === YT_PlayerState.SEEKING) {
+      dataToReplyWith.videoState = YT_PlayerState.SEEKING;
     }
 
-    if(socket && socket.connected) {
+    if(socket && socket.connected)
       socket.emit('send', dataToReplyWith);
-    }
   } else {
-    console.log("currentUserId is null or empty")
+    console.log("currentUserId is null or empty");
   }
 }
 
@@ -119,21 +141,30 @@ function actOnServerMessage(messageData) {
   if (action != "") {
     if(action == PossibleActions.identifyUser) {
       localStorage.setItem(currentUserIdKey, messageData.userId);
-
       console.log("userId for user set to: " + messageData.userId);
+
+      var dataToReplyWith = {};
+      dataToReplyWith.userId = messageData.userId;
+      dataToReplyWith.action = PossibleActions.identifyUser;
+      dataToReplyWith.acknowledge = true;
+
+      socket.emit('send', dataToReplyWith);
+      console.log("Sending identifyUser acknowledge to server: " + JSON.stringify(dataToReplyWith));
     } else if(action === PossibleActions.giveMeYourVideoState) {
       var dataToReplyWith = {};
+
       var currentUserId = localStorage.getItem(currentUserIdKey);
       dataToReplyWith.userId = currentUserId;
 
-      var userIdOfWhoWantsIt = messageData.userIdOfWhoWantsIt;
-
-      dataToReplyWith.videoPlayTime = '';
-      dataToReplyWith.videoState = '';
       dataToReplyWith.action = action;
+      dataToReplyWith.userIdOfWhoWantsIt = messageData.userIdOfWhoWantsIt;
+      dataToReplyWith.videoState = getVideoStateAsString(player.getPlayerState());
+      dataToReplyWith.currentPlayTime = player.getCurrentTime();
 
-      if(socket && socket.connected)
+      if(socket && socket.connected) {
         socket.emit('send', dataToReplyWith);
+        console.log("Video state sent to server: " + JSON.stringify(dataToReplyWith));
+      }
     } else if(action === PossibleActions.takeVideoState) {
         reflectGottenVideoStateHere(messageData);
     }
@@ -144,14 +175,37 @@ function reflectGottenVideoStateHere(messageData) {
   console.log("Inside reflectGottenVideoStateHere");
 
   var videoState = messageData.videoState;
-  if(videoState) {
-    if(videoState === YT_PlayerState.PLAYING) {
-      player.playVideo();
-    } else if(videoState === YT_PlayerState.PAUSED) {
-      player.pauseVideo();
-    } else if(videoState === YT_PlayerState.ENDED) {
-        player.stopVideo();
-    }
-    //player.seekTo(seconds:Number, allowSeekAhead:Boolean):Void
+  if(videoState === YT_PlayerState.PLAYING) {
+    player.seekTo(messageData.currentPlayTime, true);
+    player.playVideo();
+  } else if(videoState === YT_PlayerState.PAUSED) {
+    player.seekTo(messageData.currentPlayTime, true);
+    player.pauseVideo();
+  } else if(videoState === YT_PlayerState.ENDED) {
+    player.stopVideo();
+  } else if(videoState === YT_PlayerState.SEEKING) {
+    player.seekTo(messageData.currentPlayTime, true);
+  } else {
+    player.seekTo(messageData.currentPlayTime, true);
+    player.playVideo();
   }
+}
+
+function getVideoStateAsString(videoStateAsInt) {
+  var whatToReturn = "";
+  switch (videoStateAsInt) {
+    case -1: whatToReturn = "UNSTARTED";
+    break;
+    case 0 : whatToReturn = "ENDED";
+    break;
+    case 1 : whatToReturn = "PLAYING";
+    break;
+    case 2 : whatToReturn = "PAUSED";
+    break;
+    case 3 : whatToReturn = "BUFFERING";
+    break;
+    case 5 : whatToReturn = "CUED";
+    break;
+  }
+  return whatToReturn;
 }

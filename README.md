@@ -13,3 +13,5 @@ Search video in order to watch something else
 
 Connect node server to postgres database to enable
  user, sessions, invites etc
+
+add video seek action sync functionality
