@@ -58,7 +58,6 @@ function setupCommunications() {
       socket.on('disconnect', function() {
         //In the identifyConnectedClient function I set the userId on the socket
         var userIdOfDisconnectedUser = socket.userId;
-        //console.log("Disconnected userId: " + userIdOfDisconnectedUser);
         delete connectedUsers[userIdOfDisconnectedUser];
         console.log("Disconnected userId: " + userIdOfDisconnectedUser);
       });
@@ -94,8 +93,8 @@ function newUserVideoStateInit(userIdOfWhoWantsVideoState) {
         dataToReplyWith.userIdOfWhoWantsIt = userIdOfWhoWantsVideoState;
 
         var socketToAskForVideoState = connectedUsers[aUserId];
-          if(socketToAskForVideoState && socketToAskForVideoState.connected) {
-            socketToAskForVideoState.emit('message', dataToReplyWith);
+        if(socketToAskForVideoState && socketToAskForVideoState.connected) {
+          socketToAskForVideoState.emit('message', dataToReplyWith);
           break;
         }
       }
@@ -124,28 +123,18 @@ function actOnClientMessage(socketToAClient, messageData) {
         dataToReplyWith.action = PossibleActions.takeVideoState;
         dataToReplyWith.currentPlayTime = messageData.currentPlayTime;
         dataToReplyWith.videoState = messageData.videoState;
-
+        
         socketToSendStateTo.emit('message', dataToReplyWith);
       }
     } else if(action === PossibleActions.videoStateChange) {
       var theState = messageData.videoState;
-      actOnReceivingVideoStateChange(userIdCausingAction, theState, messageData.currentPlayTime);
-    }
-  }
-}
 
-function actOnReceivingVideoStateChange(userIdCausingAction, theState, videoPlayTime) {
-  for (var aUserId in connectedUsers) {
-    if(connectedUsers.hasOwnProperty(aUserId)) {
-      if(aUserId !== userIdCausingAction) {
-        var dataToReplyWith = {};
-        dataToReplyWith.action = PossibleActions.takeVideoState;
-        dataToReplyWith.currentPlayTime = videoPlayTime;
-        dataToReplyWith.videoState = theState;
+      var dataToReplyWith = {};
+      dataToReplyWith.action = PossibleActions.takeVideoState;
+      dataToReplyWith.currentPlayTime = messageData.currentPlayTime;
+      dataToReplyWith.videoState = theState;
 
-        var socketToSendStateChangeTo = connectedUsers[aUserId];
-        socketToSendStateChangeTo.emit('message', dataToReplyWith);
-      }
+      socketToAClient.broadcast.emit('message', dataToReplyWith);
     }
   }
 }
