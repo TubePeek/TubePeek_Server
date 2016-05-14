@@ -4,8 +4,9 @@ var models = require('./models.js');
 var tools = require('./userManager.js');
 var Hashids = require('hashids');
 
-// userId : socketObject
+//Will contain objects with key: userId and value: socketObject
 var connectedUsers = {};
+
 //Contains Session objects ... each session object has a sessionId and a list of users
 //var activeSessions = {};
 
@@ -28,13 +29,12 @@ var YT_PlayerState = {
 var app = express();
 var port = 3700;
 configureWebServer(app);
-
 var server = app.listen(port);
 console.log("Listening on port " + port);
 
 var io = require('socket.io').listen(server);
-
 setupCommunications();
+
 
 function configureWebServer(appObj) {
   appObj.set('views', __dirname + '/tpl');
@@ -56,7 +56,6 @@ function setupCommunications() {
           actOnClientMessage(socket, data);
       });
       socket.on('disconnect', function() {
-        //In the identifyConnectedClient function I set the userId on the socket
         var userIdOfDisconnectedUser = socket.userId;
         delete connectedUsers[userIdOfDisconnectedUser];
         console.log("Disconnected userId: " + userIdOfDisconnectedUser);
@@ -66,6 +65,7 @@ function setupCommunications() {
   });
 }
 
+// This sends a newly generated unique userId to the newly connected client
 function identifyConnectedClient(theSocket) {
   var hashidsObj = new Hashids("Some kind of salt");
   var timeInSeconds = new Date().getTime();
@@ -87,8 +87,6 @@ function newUserVideoStateInit(userIdOfWhoWantsVideoState) {
     if(connectedUsers.hasOwnProperty(aUserId)) {
       if(aUserId !== userIdOfWhoWantsVideoState) {
         var dataToReplyWith = {};
-
-        //dataToReplyWith.userId = aUserId;
         dataToReplyWith.action = PossibleActions.giveMeYourVideoState;
         dataToReplyWith.userIdOfWhoWantsIt = userIdOfWhoWantsVideoState;
 
@@ -116,8 +114,8 @@ function actOnClientMessage(socketToAClient, messageData) {
       }
     } else if(action === PossibleActions.giveMeYourVideoState) {
       var userIdOfWhoWantsVideoState = messageData.userIdOfWhoWantsIt;
-
       var socketToSendStateTo = connectedUsers[userIdOfWhoWantsVideoState];
+
       if(socketToSendStateTo && socketToSendStateTo.connected) {
         var dataToReplyWith = {};
         dataToReplyWith.action = PossibleActions.takeVideoState;

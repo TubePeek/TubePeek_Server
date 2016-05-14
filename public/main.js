@@ -6,6 +6,8 @@ var socket;
 var testYoutubeVideoId = "l-gQLqv9f4o";
 
 var currentUserIdKey = 'currentUserId';
+var shouldPlayerStateChangeBeSilent = false;
+//var communicateToServer = true;
 
 var PossibleActions = {
   identifyUser : 'identifyUser',
@@ -78,17 +80,23 @@ function timeTrackForUserSkippingInAVideo() {
         if (Math.abs(t - lastTime - 1) > 0.5) {// there was a seek occuring
           var event = {};
           event.data = YT_PlayerState.SEEKING;
-          onPlayerStateChange(event);
+          if(!shouldPlayerStateChangeBeSilent) {
+            onPlayerStateChange(event);
+            shouldPlayerStateChangeBeSilent = false;
+          }
         }
       }
     }
     lastTime = player.getCurrentTime();
     setTimeout(checkPlayerTime, interval); /// repeat function call in 1 second
   }
-  setTimeout(checkPlayerTime, interval); /// initial call delayed
+  /// initial call delayed so that when the video starts playing a skip is not recorded.
+  //So that when the video starts playing a skip is not recorded
+  setTimeout(checkPlayerTime, interval);
 }
 
 function onPlayerStateChange(event) {
+  console.log("In onPlayerStateChange method ... ");
   var currentUserId = localStorage.getItem(currentUserIdKey);
 
   if(currentUserId) {
@@ -110,10 +118,15 @@ function onPlayerStateChange(event) {
       dataToReplyWith.videoState = 'CUED';
     } else if(event.data === YT_PlayerState.SEEKING) {
       dataToReplyWith.videoState = YT_PlayerState.SEEKING;
+      console.log("Video has been seeked!");
     }
-
-    if(socket && socket.connected)
-      socket.emit('send', dataToReplyWith);
+    if(shouldPlayerStateChangeBeSilent) {
+      setTimeout(function() {
+          shouldPlayerStateChangeBeSilent = false;
+      }, 2000);
+    } else if(socket && socket.connected) {
+        socket.emit('send', dataToReplyWith);
+    }
   } else {
     console.log("currentUserId is null or empty");
   }
@@ -148,47 +161,58 @@ function actOnServerMessage(messageData) {
       dataToReplyWith.action = PossibleActions.identifyUser;
       dataToReplyWith.acknowledge = true;
 
-      socket.emit('send', dataToReplyWith);
-      console.log("Sending identifyUser acknowledge to server: " + JSON.stringify(dataToReplyWith));
-    } else if(action === PossibleActions.giveMeYourVideoState) {
-      var dataToReplyWith = {};
-
-      var currentUserId = localStorage.getItem(currentUserIdKey);
-      dataToReplyWith.userId = currentUserId;
-
-      dataToReplyWith.action = action;
-      dataToReplyWith.userIdOfWhoWantsIt = messageData.userIdOfWhoWantsIt;
-      dataToReplyWith.videoState = getVideoStateAsString(player.getPlayerState());
-      dataToReplyWith.currentPlayTime = player.getCurrentTime();
-
       if(socket && socket.connected) {
         socket.emit('send', dataToReplyWith);
-        console.log("Video state sent to server: " + JSON.stringify(dataToReplyWith));
+        console.log("Sending identifyUser ACKNOWLEDGE to server: " + JSON.stringify(dataToReplyWith));
       }
+    } else if(action === PossibleActions.giveMeYourVideoState) {
+      giveTheServerYourState(messageData, action, socket);
     } else if(action === PossibleActions.takeVideoState) {
-        reflectGottenVideoStateHere(messageData);
+      reflectGottenVideoState(messageData);
     }
   }
 }
 
-function reflectGottenVideoStateHere(messageData) {
+function giveTheServerYourState(messageData, action, socket) {
+  var dataToReplyWith = {};
+
+  var currentUserId = localStorage.getItem(currentUserIdKey);
+  dataToReplyWith.userId = currentUserId;
+
+  dataToReplyWith.action = action;
+  dataToReplyWith.userIdOfWhoWantsIt = messageData.userIdOfWhoWantsIt;
+  dataToReplyWith.videoState = getVideoStateAsString(player.getPlayerState());
+  dataToReplyWith.currentPlayTime = player.getCurrentTime();
+
+  if(socket && socket.connected) {
+    socket.emit('send', dataToReplyWith);
+    console.log("Video state sent to server: " + JSON.stringify(dataToReplyWith));
+  }
+}
+
+function reflectGottenVideoState(messageData) {
   console.log("Inside reflectGottenVideoStateHere");
 
   var videoState = messageData.videoState;
+  shouldPlayerStateChangeBeSilent = true;
+
   if(videoState === YT_PlayerState.PLAYING) {
-    player.seekTo(messageData.currentPlayTime, true);
+    //player.seekTo(messageData.currentPlayTime, true);
     player.playVideo();
   } else if(videoState === YT_PlayerState.PAUSED) {
-    player.seekTo(messageData.currentPlayTime, true);
+    //player.seekTo(messageData.currentPlayTime, true);
     player.pauseVideo();
   } else if(videoState === YT_PlayerState.ENDED) {
     player.stopVideo();
   } else if(videoState === YT_PlayerState.SEEKING) {
+    if(getVideoStateAsString(player.getPlayerState()) === YT_PlayerState.PAUSED) {
+      player.playVideo();
+    }
     player.seekTo(messageData.currentPlayTime, true);
-  } else {
+  } /*else {
     player.seekTo(messageData.currentPlayTime, true);
     player.playVideo();
-  }
+  } */
 }
 
 function getVideoStateAsString(videoStateAsInt) {
@@ -196,15 +220,15 @@ function getVideoStateAsString(videoStateAsInt) {
   switch (videoStateAsInt) {
     case -1: whatToReturn = "UNSTARTED";
     break;
-    case 0 : whatToReturn = "ENDED";
+    case 0 : whatToReturn = YT_PlayerState.ENDED;
     break;
-    case 1 : whatToReturn = "PLAYING";
+    case 1 : whatToReturn = YT_PlayerState.PLAYING;
     break;
-    case 2 : whatToReturn = "PAUSED";
+    case 2 : whatToReturn = YT_PlayerState.PAUSED;
     break;
     case 3 : whatToReturn = "BUFFERING";
     break;
-    case 5 : whatToReturn = "CUED";
+    case 5 : whatToReturn = YT_PlayerState.CUED;
     break;
   }
   return whatToReturn;
