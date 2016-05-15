@@ -123,7 +123,7 @@ function onPlayerStateChange(event) {
     if(shouldPlayerStateChangeBeSilent) {
       setTimeout(function() {
           shouldPlayerStateChangeBeSilent = false;
-      }, 2000);
+      }, 3000);
     } else if(socket && socket.connected) {
         socket.emit('send', dataToReplyWith);
     }
@@ -206,7 +206,7 @@ function reflectGottenVideoState(messageData) {
     player.stopVideo();
   } else if(videoState === YT_PlayerState.SEEKING) {
     if(getVideoStateAsString(player.getPlayerState()) === YT_PlayerState.PAUSED) {
-      player.playVideo();
+      //player.playVideo();
     }
     player.seekTo(messageData.currentPlayTime, true);
   } /*else {
