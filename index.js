@@ -4,6 +4,10 @@ var models = require('./models.js');
 var tools = require('./userManager.js');
 var Hashids = require('hashids');
 
+//--
+var bookshelf = require('./bookshelf');
+
+//--
 //Will contain objects with key: userId and value: socketObject
 var connectedUsers = {};
 
@@ -121,7 +125,7 @@ function actOnClientMessage(socketToAClient, messageData) {
         dataToReplyWith.action = PossibleActions.takeVideoState;
         dataToReplyWith.currentPlayTime = messageData.currentPlayTime;
         dataToReplyWith.videoState = messageData.videoState;
-        
+
         socketToSendStateTo.emit('message', dataToReplyWith);
       }
     } else if(action === PossibleActions.videoStateChange) {

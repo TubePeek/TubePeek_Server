@@ -7,6 +7,7 @@ var testYoutubeVideoId = "l-gQLqv9f4o";
 
 var currentUserIdKey = 'currentUserId';
 var shouldPlayerStateChangeBeSilent = false;
+var timeOfLastPlayerStateChange = new Date();
 //var communicateToServer = true;
 
 var PossibleActions = {
@@ -125,10 +126,21 @@ function onPlayerStateChange(event) {
           shouldPlayerStateChangeBeSilent = false;
       }, 3000);
     } else if(socket && socket.connected) {
-        socket.emit('send', dataToReplyWith);
+        var secondsSinceLastPlayerStateChange = getSecondsDiff(timeOfLastPlayerStateChange, new Date());
+        if(secondsSinceLastPlayerStateChange > 3) {
+          socket.emit('send', dataToReplyWith);
+          secondsSinceLastPlayerStateChange = new Date();
+        } else {
+          console.log("3 seconds need to pass before sending state change");
+        }
     }
   } else {
     console.log("currentUserId is null or empty");
+  }
+
+  function getSecondsDiff(beforeDate, afterDate) {
+    var result = (afterDate - beforeDate) / 1000;
+    return result;
   }
 }
 
@@ -195,6 +207,7 @@ function reflectGottenVideoState(messageData) {
 
   var videoState = messageData.videoState;
   shouldPlayerStateChangeBeSilent = true;
+  timeOfLastPlayerStateChange = new Date();
 
   if(videoState === YT_PlayerState.PLAYING) {
     //player.seekTo(messageData.currentPlayTime, true);
