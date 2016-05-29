@@ -33,6 +33,7 @@ var YT_PlayerState = {
 var app = express();
 var port = 3700;
 configureWebServer(app);
+
 var server = app.listen(port);
 console.log("Listening on port " + port);
 
@@ -56,7 +57,6 @@ function setupCommunications() {
       console.log("Got a connection");
 
       socket.on('send', function (data) {
-          //console.log("Got a message: " + JSON.stringify(data));
           actOnClientMessage(socket, data);
       });
       socket.on('disconnect', function() {

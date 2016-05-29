@@ -26,13 +26,26 @@ var knex = require('knex')(dbConfig);
 var bookshelf = require('bookshelf')(knex);
 
 //--Setup Database schema
-var User = bookshelf.Model.extend({
-  tableName: 'users'
+var Users = bookshelf.Model.extend({
+  tableName: 'usermaster',
+  watchSessions: function() {
+    return this.belongsToMany(WatchSessions, 'watchsessions_users');
+  }
+});
+var Videos = bookshelf.Model.extend({tableName: 'video'});
+
+var WatchSessions = bookshelf.Model.extend({
+  tableName: 'watchsessions',
+  creator_user_id: function() {
+    return this.hasOne(Users);
+  },
+  users: function() {
+    return this.hasMany(Users);
+  }
 });
 
-
-
-
-
+var WatchSession_Users = bookshelf.Model.extend({
+  tableName: 'watchsessions_users'
+});
 
 module.exports = bookshelf;
