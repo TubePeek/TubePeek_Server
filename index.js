@@ -1,9 +1,15 @@
+/**
+
+
+*/
 
 var express = require("express");
 var models = require('./models.js');
 var tools = require('./userManager.js');
 var Hashids = require('hashids');
+var bookshelf = require('./bookshelf');
 
+//--
 //Will contain objects with key: userId and value: socketObject
 var connectedUsers = {};
 
@@ -29,12 +35,12 @@ var YT_PlayerState = {
 var app = express();
 var port = 3700;
 configureWebServer(app);
+
 var server = app.listen(port);
 console.log("Listening on port " + port);
 
 var io = require('socket.io').listen(server);
 setupCommunications();
-
 
 function configureWebServer(appObj) {
   appObj.set('views', __dirname + '/tpl');
@@ -52,7 +58,6 @@ function setupCommunications() {
       console.log("Got a connection");
 
       socket.on('send', function (data) {
-          //console.log("Got a message: " + JSON.stringify(data));
           actOnClientMessage(socket, data);
       });
       socket.on('disconnect', function() {
@@ -121,7 +126,7 @@ function actOnClientMessage(socketToAClient, messageData) {
         dataToReplyWith.action = PossibleActions.takeVideoState;
         dataToReplyWith.currentPlayTime = messageData.currentPlayTime;
         dataToReplyWith.videoState = messageData.videoState;
-        
+
         socketToSendStateTo.emit('message', dataToReplyWith);
       }
     } else if(action === PossibleActions.videoStateChange) {
