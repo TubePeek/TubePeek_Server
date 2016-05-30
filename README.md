@@ -2,17 +2,19 @@
 
 
 Run:
-
 ```terminal
 npm install
 ```
 
 Then run:
-
 ```terminal
 node index.js
 ```
 
+Running tests:
+```terminal
+npm test
+```
 # TODOS
 ---------------------
 - video current state for newly connected clients

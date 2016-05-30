@@ -1,10 +1,12 @@
+/**
+
+
+*/
 
 var express = require("express");
 var models = require('./models.js');
 var tools = require('./userManager.js');
 var Hashids = require('hashids');
-
-//--
 var bookshelf = require('./bookshelf');
 
 //--
@@ -39,7 +41,6 @@ console.log("Listening on port " + port);
 
 var io = require('socket.io').listen(server);
 setupCommunications();
-
 
 function configureWebServer(appObj) {
   appObj.set('views', __dirname + '/tpl');

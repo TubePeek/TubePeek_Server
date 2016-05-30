@@ -1,5 +1,5 @@
 {
-  "name": "LetsWatch",
+  "name": "WatchWith",
   "version": "0.0.0",
   "description": "Real time video watching with a friend",
   "dependencies": {
@@ -7,10 +7,15 @@
     "express": "latest",
     "hashids": "1.0.1",
     "jade": "latest",
+    "jasmine-node": "^1.14.5",
     "knex": "^0.11.5",
     "parse-database-url": "^0.3.0",
     "pg": "^4.5.5",
     "socket.io": "latest"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "./node_modules/.bin/jasmine-node spec"
   },
   "author": "Ariaroo Efe"
 }
