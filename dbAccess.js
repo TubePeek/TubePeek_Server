@@ -28,46 +28,5 @@ function getDbConfig () {
 var dbConfig = getDbConfig();
 var knex = require('knex')(dbConfig);
 
-//--Setup Database schema
-// var Users = bookshelf.Model.extend({
-//   tableName: 'usermaster',
-//   idAttribute: 'user_id',
-//
-//   watchSessions: function() {
-//     //return this.belongsToMany(WatchSessions, 'watchsessions_usermaster');
-//     return this.belongsToMany(WatchSessions);
-//   }
-// }, {
-//     byUserId : function(theUserId) {
-//       return this.forge().query({where : {user_id: theUserId}}).fetch();
-//     }
-//   }
-// );
-// var Videos = bookshelf.Model.extend({
-//   tableName: 'video',
-//   idAttribute: 'video_id',
-// });
-//
-// var WatchSessions = bookshelf.Model.extend({
-//   tableName: 'watchsessions',
-//   idAttribute: 'session_id',
-//
-//   creatorUserId: function() {
-//     return this.hasOne(Users);
-//   },
-//   watchers: function() {
-//     return this.hasMany(Users, "user_id");
-//   }
-// });
-//
-// var WatchSessions_Users = bookshelf.Model.extend({
-//   tableName: 'watchsessions_users'
-// });
-
-// Exports
-//module.exports = bookshelf;
+// Exports knex in case we need direct access to knex outside this file
 module.exports.knex = knex;
-//module.exports.Users = Users;
-//module.exports.Videos = Videos;
-//module.exports.WatchSessions = WatchSessions;
-//module.exports.WatchSessions_Users = WatchSessions_Users;

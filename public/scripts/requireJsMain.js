@@ -1,17 +1,3 @@
-//May use this at a later time
-
-
-// requirejs(["auth/socialsAuthMain"], function(util) {
-//     //This function is called when scripts/helper/util.js is loaded.
-//     //If util.js calls define(), then this function is not fired until
-//     //util's dependencies have loaded, and the util argument will hold
-//     //the module value for "helper/util".
-// });
-
-// Start loading the main app file. Put all of
-// your application logic in there.
-//requirejs(['./webAppMain']);
-
 requirejs.config({
     baseUrl: 'scripts',
     app: {
@@ -19,4 +5,10 @@ requirejs.config({
     }
 });
 
-requirejs(['auth/socialsAuthMain']);
+requirejs(['auth/socialsAuthMain'], function(social) {
+  //This function is called when scripts/auth/socialsAuthMain.js is loaded.
+  //If socialsAuthMain.js calls define(), then this function is not fired until
+  //social's dependencies have loaded, and the social argument will hold
+  //the module value for "auth/socialsAuthMain".
+  
+});
