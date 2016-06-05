@@ -9,8 +9,23 @@ html
 
     fb:login-button(scope="public_profile,email" onlogin="checkLoginState();")
 
+    span#signinButton
+      span.g-signin(data-callback='signinCallback',
+      data-clientid='946104220756-g83q8olnduambr5h8pvvt6vnvqi9di8g.apps.googleusercontent.com',
+      data-cookiepolicy='single_host_origin',
+      data-scope='https://www.googleapis.com/auth/plus.login')
+
     #status
 
+    //script(src='https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js')
+    script(src='/scripts/libs/angular.min.js')
+
+    //socket.io MUST come before require.js
     script(src='/socket.io/socket.io.js')
-    script(src='/webAppMain.js')
-    script(src='/facebookLoginSetup.js')
+
+    //data-main attribute tells require.js to load scripts/main.js after require.js
+    script(src='/scripts/libs/require.js', data-main='/scripts/requireJsMain.js')
+
+    script(src='/scripts/webAppMain.js')
+
+    script(src='https://apis.google.com/js/client:platform.js?onLoad=onGooglePlusClientLibraryLoaded' async defer)
