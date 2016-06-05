@@ -4,7 +4,6 @@
 */
 
 var express = require("express");
-var tools = require('./userManager.js');
 var Hashids = require('hashids');
 var Users = require('./models/Users');
 
