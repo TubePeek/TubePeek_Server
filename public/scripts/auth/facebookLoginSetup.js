@@ -2,7 +2,7 @@
 
 
 define(function (require) {
-  window.fbAsyncInit = function() {
+  var fbAsyncInit = function() {
     FB.init({
       appId      : '833454443465085',
       xfbml      : true,
@@ -10,19 +10,19 @@ define(function (require) {
     });
   };
 
-  (function(d, s, id){
+  var fbImmediatelyExecutingFunc = function(d, s, id){
      var js, fjs = d.getElementsByTagName(s)[0];
      if (d.getElementById(id)) {return;}
      js = d.createElement(s); js.id = id;
      js.src = "//connect.facebook.net/en_US/sdk.js";
      fjs.parentNode.insertBefore(js, fjs);
-  }(document, 'script', 'facebook-jssdk'));
+  };//(document, 'script', 'facebook-jssdk'));
 
 
   // This function is called when someone finishes with the Login
   // Button.  See the onlogin handler attached to it in the sample
   // code below.
-  window.checkLoginState = function() {
+  var checkLoginState = function() {
     FB.getLoginStatus(function(response) {
       statusChangeCallback(response);
     });
@@ -64,6 +64,8 @@ define(function (require) {
 
   //In case you need to export stuff outside
   return {
-
+    fbAsyncInit : fbAsyncInit,
+    fbImmediatelyExecutingFunc : fbImmediatelyExecutingFunc,
+    checkLoginState: checkLoginState
   };
 });

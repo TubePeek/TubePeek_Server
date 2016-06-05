@@ -1,6 +1,5 @@
 "use strict";
 
-
 define(function (require) {
   //var clientId = "946104220756-g83q8olnduambr5h8pvvt6vnvqi9di8g.apps.googleusercontent.com";
   //var clientSecret = "IA71PLwcNp4KJIYTJ1ub3o5h";
