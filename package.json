@@ -3,7 +3,6 @@
   "version": "0.0.0",
   "description": "Real time video watching with a friend",
   "dependencies": {
-    "bookshelf": "^0.9.5",
     "express": "latest",
     "hashids": "1.0.1",
     "jade": "latest",

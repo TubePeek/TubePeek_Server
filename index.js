@@ -4,10 +4,9 @@
 */
 
 var express = require("express");
-var models = require('./models.js');
 var tools = require('./userManager.js');
 var Hashids = require('hashids');
-var bookshelf = require('./bookshelf');
+var Users = require('./models/Users');
 
 //--
 //Will contain objects with key: userId and value: socketObject
