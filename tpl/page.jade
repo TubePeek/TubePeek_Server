@@ -13,7 +13,7 @@ html
       span.g-signin(data-callback='signinCallback',
       data-clientid='946104220756-g83q8olnduambr5h8pvvt6vnvqi9di8g.apps.googleusercontent.com',
       data-cookiepolicy='single_host_origin',
-      data-scope='https://www.googleapis.com/auth/plus.login')
+      data-scope='https://www.googleapis.com/auth/plus.login https://www.googleapis.com/auth/plus.profile.emails.read')
 
     #status
 
@@ -28,4 +28,4 @@ html
 
     //script(src='/scripts/webAppMain.js')
 
-    script(src='https://apis.google.com/js/client:platform.js?onLoad=onGooglePlusClientLibraryLoaded' async defer)
+    script(src='https://apis.google.com/js/client:platform.js' async defer)
