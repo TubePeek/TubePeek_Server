@@ -18,7 +18,7 @@ function getDbConfig () {
       host : '127.0.0.1',
       user : 'postgres',
       password : 'asdffdsa',
-      database : 'letswatchdb'
+      database : 'watchwithdb'
     };
   }
   theDbConfig.connection.charset = 'utf8';

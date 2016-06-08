@@ -46,19 +46,21 @@ define(function (require) {
   // Here we run a very simple test of the Graph API after login is
   // successful.  See statusChangeCallback() for when this call is made.
   function testAPI(fbSuccessAuthResponse) {
-    console.log('Welcome!  Fetching your information.... \n');
+    //console.log('Welcome!  Fetching your information.... \n');
     var userFbId = fbSuccessAuthResponse.userID;
     var accessToken = fbSuccessAuthResponse.accessToken;
     var accessTokenExpiry = fbSuccessAuthResponse.expiresIn;
 
-    FB.api('/me', function(response) {
-      console.log("FB.api(/'me') >>: " + JSON.stringify(response) + "\n");
-      var userFbFullName = response.name;
-      var userFbId = response.id;
-      console.log('Successful fb login for: ' + userFbFullName);
+    FB.api('/me?fields=id,name,email,permissions', function(response) {
+      var fbAuthData = {};
+      fbAuthData.accessToken = accessToken;
+      fbAuthData.accessTokenExpiry = accessTokenExpiry;
 
-      AuthStates.facebook = response;
-      window.chooseAuthProvider();
+      fbAuthData.userId = userFbId;
+      fbAuthData.emailAddress = response.email;
+      fbAuthData.fullName = response.name;
+
+      window.setAuthProvider('facebook', fbAuthData);
     });
   }
 
