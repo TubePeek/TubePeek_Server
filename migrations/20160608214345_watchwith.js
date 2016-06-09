@@ -1,8 +1,10 @@
 
 exports.up = function(knex, Promise) {
-    return Promise.all([        
+    return Promise.all([
         knex.schema.createTable('usermaster', function(table) {
             table.increments('id').primary();
+            table.string('email_address');
+            table.timestamps();
         }),
         knex.schema.createTable('social_identities', function(table){
             table.increments('id').primary();
