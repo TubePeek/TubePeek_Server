@@ -29,6 +29,7 @@ define(function (require) {
              googleAuthData.emailAddress = emailAddress;
              googleAuthData.fullName = response.displayName;
 
+             //setAuthProvider is defined in the webAppMain.js file
              window.setAuthProvider('google', googleAuthData);
            });
         });

@@ -1,26 +1,31 @@
-var dbAccess = require('../dbAccess');
+var dbAccess = require('../db');
 
 var DbObject = {};
 
 DbObject.insert = function(insertData, callbackOnInsertDone) {
-    return dbAccess.knex(this.tableName).insert(insertData).then(function(theReturn) {
+    return dbAccess(this.tableName).insert(insertData).then(function(theReturn) {
+      //console.log("insert return: " + JSON.stringify(theReturn));
+      //theReturn is NOT the value of the id of the newly inserted row
+
       callbackOnInsertDone();
     });
 }
 
 DbObject.findBy = function(columnName, columnVal, callbackOnResult) {
-  var queryObj = {};
-  queryObj[columnName] = columnVal;
+    var queryObj = {};
+    queryObj[columnName] = columnVal;
 
-  dbAccess.knex(this.tableName).where(queryObj).select('*').then(function (results) {
-    callbackOnResult(results);
-  });
+    dbAccess(this.tableName).where(queryObj).select('*').then(function (results) {
+        callbackOnResult(results);
+    });
 }
 
 DbObject.deleteBy = function(columnName, columnVal, callbackOnDeleteDone) {
-  dbAccess.knex(this.tableName).where(columnName, columnVal).del().then(function(theReturn) {
-    callbackOnDeleteDone(theReturn);
-  });
+    dbAccess(this.tableName).where(columnName, columnVal).del().then(function(theReturn) {
+        callbackOnDeleteDone(theReturn);
+    });
 }
+
+DbObject.knex = dbAccess;
 
 module.exports = DbObject;

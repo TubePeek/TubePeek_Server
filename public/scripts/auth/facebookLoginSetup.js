@@ -60,6 +60,7 @@ define(function (require) {
       fbAuthData.emailAddress = response.email;
       fbAuthData.fullName = response.name;
 
+      //setAuthProvider is defined in the webAppMain.js file
       window.setAuthProvider('facebook', fbAuthData);
     });
   }
