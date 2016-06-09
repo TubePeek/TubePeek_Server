@@ -29,8 +29,10 @@ Running tests:
 npm test
 ```
 
-Follow this to understand the database migration things:
-[Knex Database setup tutorial](http://www.dancorman.com/knex-your-sql-best-friend/)
+Follow this to understand the database migration things with knex:
+- [Knex Database setup tutorial](http://www.dancorman.com/knex-your-sql-best-friend/)
+- [Knex database migration tutorial] (http://alexzywiak.github.io/running-migrations-with-knex/)
+
 
 ## TODOS
 ---------------------
