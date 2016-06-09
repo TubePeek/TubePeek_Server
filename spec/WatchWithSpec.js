@@ -1,10 +1,10 @@
-var bookshelf = require('../bookshelf');
+var Users = require('../models/Users');
 
 
 describe("Database tests", function() {
-  describe("Users table tests", function() {
-    it("Users can be inserted, retrieved and deleted", function() {
-      var newUser = new bookshelf.Users({
+  describe("> Users table tests", function() {
+    it("> User insert, retrieve and delete", function() {
+      var idOfNewUser = Users.insert({
         email_address: 'passions@gmail.com',
         first_name: "louis",
         last_name: "fitzgerald",
@@ -12,24 +12,18 @@ describe("Database tests", function() {
         password_hash: "asdfasdf",
         birthday: "14th of April 1900",
         gender: "You decide"
-      });
-      newUser.save(null, {method: 'insert'});
-      // bookshelf.Users.create({
-      //   email_address: 'efe3232@gmail.com',
-      //   first_name: "fitzgerald"
-      // }).save();
-      //--
-      bookshelf.Users.byEmail('passions@gmail.com')
-      .then(function(userModel){
-        var firstName = userModel.get('first_name');
-        expect(firstName).toEqual('louis');
+      }, function() {
+        Users.findBy('email_address', 'passions@gmail.com', function(userResults) {
+          expect(userResults.length).toEqual(1);
 
-        userModel.destroy();    //Delete row
-      }).catch(function(error){
-        //expect(testFn).toThrow(new Error("unrecognized to-unit"));
-        //fail('Failure to insert a row to usermaster table! \n' + error + '\n');
+          var firstName = userResults[0].first_name;
+          expect(firstName).toEqual('louis');
+
+          Users.deleteBy('email_address', 'passions@gmail.com', function(deleteReturn) {
+            console.log("Delete return: " + deleteReturn);
+          });
+        });
       });
-      //done();
     });
   });
 

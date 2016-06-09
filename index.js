@@ -1,13 +1,6 @@
-/**
-
-
-*/
-
 var express = require("express");
-var models = require('./models.js');
-var tools = require('./userManager.js');
 var Hashids = require('hashids');
-var bookshelf = require('./bookshelf');
+var Users = require('./models/Users');
 
 //--
 //Will contain objects with key: userId and value: socketObject
@@ -17,10 +10,13 @@ var connectedUsers = {};
 //var activeSessions = {};
 
 var PossibleActions = {
-  identifyUser : 'identifyUser',
+  identifyUser : 'identifyUser',                         // The server sends this to the client
+  sociallyIdentifyYourself : 'sociallyIdentifyYourself', // The client sends this to the server.
   videoStateChange : 'videoStateChange',
   giveMeYourVideoState : 'giveMeYourVideoState',
   takeVideoState : 'takeVideoState',
+  //videoChangedByUser : 'videoChangedByUser',
+  //roomChange : 'roomChange',
 
   acknowledge : "acknowledge"
 };
@@ -37,7 +33,7 @@ var port = 3700;
 configureWebServer(app);
 
 var server = app.listen(port);
-console.log("Listening on port " + port);
+console.log("Listening on port: " + port);
 
 var io = require('socket.io').listen(server);
 setupCommunications();
@@ -65,26 +61,24 @@ function setupCommunications() {
         delete connectedUsers[userIdOfDisconnectedUser];
         console.log("Disconnected userId: " + userIdOfDisconnectedUser);
       });
-
-      identifyConnectedClient(socket);
   });
 }
 
 // This sends a newly generated unique userId to the newly connected client
-function identifyConnectedClient(theSocket) {
-  var hashidsObj = new Hashids("Some kind of salt");
-  var timeInSeconds = new Date().getTime();
-  var newUserId = hashidsObj.encode(timeInSeconds);
-
-  theSocket.userId = newUserId;
-  connectedUsers[newUserId] = theSocket;
-
-  var dataToReplyWith = {};
-  dataToReplyWith.userId = newUserId;
-  dataToReplyWith.action = PossibleActions.identifyUser;
-
-  theSocket.emit('message', dataToReplyWith);
-}
+// function identifyConnectedClient(theSocket) {
+//   var hashidsObj = new Hashids("Some kind of salt");
+//   var timeInSeconds = new Date().getTime();
+//   var newUserId = hashidsObj.encode(timeInSeconds);
+//
+//   theSocket.userId = newUserId;
+//   connectedUsers[newUserId] = theSocket;
+//
+//   var dataToReplyWith = {};
+//   dataToReplyWith.userId = newUserId;
+//   dataToReplyWith.action = PossibleActions.identifyUser;
+//
+//   theSocket.emit('message', dataToReplyWith);
+// }
 
 //Here, I try to get video state from any other connected user
 function newUserVideoStateInit(userIdOfWhoWantsVideoState) {
@@ -109,15 +103,32 @@ function actOnClientMessage(socketToAClient, messageData) {
   var action = messageData.action || "";
 
   if (action != '') {
-    var userIdCausingAction = messageData.userId;
+    if(action === PossibleActions.sociallyIdentifyYourself) {
+      console.log("Got sociallyIdentifyYourself acknowledge from client: " + JSON.stringify(messageData));
+      // var authData = messageData.authData;
+      // var socialProvider = messageData.provider;
+      //
+      // SocialIdentities.findByUserIdAndProvider(authData.userId, socialProvider, function(identitiesFound) {
+      //   for (var anIdentity in identitiesFound) {
+      //     if(anIdentity.provider === socialProvider) {
+      //       User.findBy('user_id', anIdentity.userId, function(userFound){
+      //         if(userFound) {
+      //           console.log("Found user!");
+      //
+      //         }
+      //       });
+      //       break;
+      //     }
+      //   }
+      // });
 
-    if(action === PossibleActions.identifyUser) {
-      console.log("Got identifyUser acknowledge from client: " + JSON.stringify(messageData));
-      var isAnAcknowledge = messageData.acknowledge;
-      if(isAnAcknowledge) {
-          newUserVideoStateInit(messageData.userId);
-      }
+      // var isAnAcknowledge = messageData.acknowledge;
+      // if(isAnAcknowledge) {
+      //     newUserVideoStateInit(messageData.userId);
+      // }
     } else if(action === PossibleActions.giveMeYourVideoState) {
+      var userIdCausingAction = messageData.userId;
+
       var userIdOfWhoWantsVideoState = messageData.userIdOfWhoWantsIt;
       var socketToSendStateTo = connectedUsers[userIdOfWhoWantsVideoState];
 
@@ -130,6 +141,7 @@ function actOnClientMessage(socketToAClient, messageData) {
         socketToSendStateTo.emit('message', dataToReplyWith);
       }
     } else if(action === PossibleActions.videoStateChange) {
+      var userIdCausingAction = messageData.userId;
       var theState = messageData.videoState;
 
       var dataToReplyWith = {};
