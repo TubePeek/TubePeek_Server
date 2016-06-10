@@ -25,7 +25,7 @@ define(function (require) {
                  emailAddress = response.emails[0].value;
                }
              }
-             googleAuthData.userId = response.id;
+             googleAuthData.uid = response.id;
              googleAuthData.emailAddress = emailAddress;
              googleAuthData.fullName = response.displayName;
 

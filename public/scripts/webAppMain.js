@@ -179,7 +179,7 @@ requirejs(['auth/socialsAuthMain'], function(social) {
     window.youtubePlayerOnError = function(event) {
         if(event.data == 2 // Video id not ok
             || event.data == 100 //Not found
-            || event.data == 101 || 150 // Not allowed for embeddeding
+            || event.data == 101 || 150 // Not allowed for embedding
         ) {
             console.log("Gaddammit!!! A shiznit error occurred!");
         } else if(event.data == 5) {//Video not supported on HTML5
@@ -199,7 +199,7 @@ requirejs(['auth/socialsAuthMain'], function(social) {
         };
         if(socket && socket.connected) {
             socket.emit('send', dataToReplyWith);
-            console.log("Sent to server: " + JSON.stringify(dataToReplyWith));
+            //console.log("Sent to server: " + JSON.stringify(dataToReplyWith));
         }
     }
 

@@ -36,17 +36,13 @@ define(function (require) {
     if (response.status === 'connected') {// Logged into your app and Facebook.
       testAPI(response.authResponse);
     } else if (response.status === 'not_authorized') {// The person is logged into Facebook, but not your app.
-      document.getElementById('status').innerHTML = 'Please log ' +
-        'into this app.';
+      document.getElementById('status').innerHTML = 'Please log into this app.';
     } else {// The person is not logged into Facebook, so we're not sure if they are logged into this app or not.
       document.getElementById('status').innerHTML = 'Please log into Facebook.';
     }
   }
 
-  // Here we run a very simple test of the Graph API after login is
-  // successful.  See statusChangeCallback() for when this call is made.
   function testAPI(fbSuccessAuthResponse) {
-    //console.log('Welcome!  Fetching your information.... \n');
     var userFbId = fbSuccessAuthResponse.userID;
     var accessToken = fbSuccessAuthResponse.accessToken;
     var accessTokenExpiry = fbSuccessAuthResponse.expiresIn;
@@ -56,7 +52,7 @@ define(function (require) {
       fbAuthData.accessToken = accessToken;
       fbAuthData.accessTokenExpiry = accessTokenExpiry;
 
-      fbAuthData.userId = userFbId;
+      fbAuthData.uid = userFbId;
       fbAuthData.emailAddress = response.email;
       fbAuthData.fullName = response.name;
 
