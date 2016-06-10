@@ -6,4 +6,6 @@ function WatchSessions(tableName) {
 
 WatchSessions.prototype = dbObject;
 
-module.exports = new WatchSessions('watchsessions');
+var watchSessionsTable = new WatchSessions('watchsessions');
+
+module.exports = watchSessionsTable;

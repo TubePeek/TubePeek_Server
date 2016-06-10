@@ -6,8 +6,8 @@ function SocialIdentities(tableName) {
 
 SocialIdentities.prototype = dbObject;
 
-
-SocialIdentities.prototype.findByUserIdAndProvider = function(theUserId, socialProvider, callbackOnResult) {
+var socialIdentitiesTable = new SocialIdentities('social_identities');
+socialIdentitiesTable.findByUserIdAndProvider = function(theUserId, socialProvider, callbackOnResult) {
   var queryObj = {};
   queryObj['uid'] = theUserId;
   queryObj.provider = socialProvider;
@@ -17,4 +17,4 @@ SocialIdentities.prototype.findByUserIdAndProvider = function(theUserId, socialP
   });
 }
 
-module.exports = new SocialIdentities('social_identities');
+module.exports = socialIdentitiesTable;
