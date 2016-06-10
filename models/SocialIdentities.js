@@ -7,12 +7,12 @@ function SocialIdentities(tableName) {
 SocialIdentities.prototype = dbObject;
 
 
-SocialIdentities.findByUserIdAndProvider = function(theUserId, socialProvider, callbackOnResult) {
+SocialIdentities.prototype.findByUserIdAndProvider = function(theUserId, socialProvider, callbackOnResult) {
   var queryObj = {};
-  queryObj['user_id'] = theUserId;
+  queryObj['uid'] = theUserId;
   queryObj.provider = socialProvider;
 
-  dbAccess.knex(this.tableName).where(queryObj).select('*').then(function (results) {
+  dbObject.knex(this.tableName).where(queryObj).select('*').then(function (results) {
     callbackOnResult(results);
   });
 }

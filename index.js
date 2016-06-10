@@ -1,6 +1,7 @@
 var express = require("express");
 var Hashids = require('hashids');
 var Users = require('./models/Users');
+var SocialIdentities = require('./models/SocialIdentities');
 
 //--
 //Will contain objects with key: userId and value: socketObject
@@ -105,27 +106,10 @@ function actOnClientMessage(socketToAClient, messageData) {
   if (action != '') {
     if(action === PossibleActions.sociallyIdentifyYourself) {
       console.log("Got sociallyIdentifyYourself acknowledge from client: " + JSON.stringify(messageData));
-      // var authData = messageData.authData;
-      // var socialProvider = messageData.provider;
-      //
-      // SocialIdentities.findByUserIdAndProvider(authData.userId, socialProvider, function(identitiesFound) {
-      //   for (var anIdentity in identitiesFound) {
-      //     if(anIdentity.provider === socialProvider) {
-      //       User.findBy('user_id', anIdentity.userId, function(userFound){
-      //         if(userFound) {
-      //           console.log("Found user!");
-      //
-      //         }
-      //       });
-      //       break;
-      //     }
-      //   }
-      // });
+      var authData = messageData.authData;
+      var socialProvider = messageData.provider;
 
-      // var isAnAcknowledge = messageData.acknowledge;
-      // if(isAnAcknowledge) {
-      //     newUserVideoStateInit(messageData.userId);
-      // }
+      persistSocialIdentity(socialProvider, authData);
     } else if(action === PossibleActions.giveMeYourVideoState) {
       var userIdCausingAction = messageData.userId;
 
@@ -151,5 +135,34 @@ function actOnClientMessage(socketToAClient, messageData) {
 
       socketToAClient.broadcast.emit('message', dataToReplyWith);
     }
+  }
+
+  function persistSocialIdentity(socialProvider, authData) {
+      SocialIdentities.findByUserIdAndProvider(authData.userId, socialProvider, function(identitiesFound) {
+          if(identitiesFound && identitiesFound.length > 0) {
+              console.log("Found social identities with userId: " + authData.userId);
+              console.log("identitiesFound: " + JSON.stringify(identitiesFound));
+
+              for (var anIdentity in identitiesFound) {
+                  if(anIdentity.provider === socialProvider) {
+                      User.findBy('id', anIdentity['user_id'], function(usersFound){
+                          if(usersFound) {
+                              console.log("Found user!" + JSON.stringify(usersFound));
+
+                          }
+                      });
+                      break;
+                  }
+              }
+          } else {
+              console.log("Got no social identities with userId: " + authData.userId);
+              //SocialIdentities.insert([{'email_address': "garfunkel@gmail.com"}], function() {
+          }
+      });
+
+      // var isAnAcknowledge = messageData.acknowledge;
+      // if(isAnAcknowledge) {
+      //     newUserVideoStateInit(messageData.userId);
+      // }
   }
 }
