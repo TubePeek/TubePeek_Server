@@ -1,7 +1,7 @@
 var dbObject = require('./DbObject');
 
 function WatchSessions(tableName) {
-  this.tableName = tableName;
+    this.tableName = tableName;
 }
 
 WatchSessions.prototype = dbObject;

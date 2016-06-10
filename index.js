@@ -121,29 +121,29 @@ function actOnClientMessage(socketToAClient, messageData) {
         }
     }
 
-  function persistSocialIdentity(socketToSendUserIdTo, socialProvider, authData) {
-      Users.findBy('email_address', authData.emailAddress, function(usersFound){
-          if(usersFound && usersFound.length > 0) {
-              console.log("User already exists.")
-              SocialIdentities.findByUserIdAndProvider(authData.uid, socialProvider, function(identitiesFound) {
-                  if(identitiesFound && identitiesFound.length > 0) {
-                      for (var anIdentity in identitiesFound) {
-                          if(anIdentity.provider === socialProvider) {
-                              identifyConnectedClient(socketToSendUserIdTo, usersFound[0]['id']);
-                              break;
-                          }
-                      }
-                  } else {
-                      insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, usersFound[0]['id']);
-                  }
-              });
-          } else {
-              Users.insert({'email_address': authData.emailAddress}, function(idOfNewUser) {
-                  insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, idOfNewUser);
-              });
-          }
-      });
-  }
+    function persistSocialIdentity(socketToSendUserIdTo, socialProvider, authData) {
+        Users.findBy('email_address', authData.emailAddress, function(usersFound){
+            if(usersFound && usersFound.length > 0) {
+                console.log("User already exists.")
+                SocialIdentities.findByUserIdAndProvider(authData.uid, socialProvider, function(identitiesFound) {
+                    if(identitiesFound && identitiesFound.length > 0) {
+                        for (var anIdentity in identitiesFound) {
+                            if(anIdentity.provider === socialProvider) {
+                                identifyConnectedClient(socketToSendUserIdTo, usersFound[0]['id']);
+                                break;
+                            }
+                        }
+                    } else {
+                        insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, usersFound[0]['id']);
+                    }
+                });
+            } else {
+                Users.insert({'email_address': authData.emailAddress}, function(idOfNewUser) {
+                    insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, idOfNewUser);
+                });
+            }
+        });
+    }
 
     function insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, idOfUser) {
         var socialIdentityInsertObj = {
@@ -158,15 +158,15 @@ function actOnClientMessage(socketToAClient, messageData) {
         });
     }
 
-  //This sends the unique userId to the newly connected client
-  function identifyConnectedClient(theSocket, theUserId) {
-      theSocket.userId = theUserId;
-      connectedUsers[theUserId] = theSocket;
+    //This sends the unique userId to the newly connected client
+    function identifyConnectedClient(theSocket, theUserId) {
+        theSocket.userId = theUserId;
+        connectedUsers[theUserId] = theSocket;
 
-      var dataToReplyWith = {};
-      dataToReplyWith.userId = theUserId;
-      dataToReplyWith.action = PossibleActions.identifyUser;
+        var dataToReplyWith = {};
+        dataToReplyWith.userId = theUserId;
+        dataToReplyWith.action = PossibleActions.identifyUser;
 
-      theSocket.emit('message', dataToReplyWith);
-  }
+        theSocket.emit('message', dataToReplyWith);
+    }
 }
