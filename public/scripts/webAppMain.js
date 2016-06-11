@@ -44,13 +44,20 @@ requirejs(['auth/socialsAuthMain'], function(social) {
     };
 
     //This will be called if the user authenticates with facebook or google successfully
-    window.setAuthProvider = function(provider, authData) {
-        if (provider === 'google') {// Signed in with Google, you can now use Google+ APIs.
+    window.setAuthProvider = function(socialProvider, authData) {
+        if (socialProvider === 'google') {// Signed in with Google, you can now use Google+ APIs.
             AuthStates.google = authData;
-        } else if (provider === 'facebook') {// Not signed in with Google, but signed in with Facebook
+        } else if (socialProvider === 'facebook') {// Not signed in with Google, but signed in with Facebook
             AuthStates.facebook = authData;
         }
-        sociallyIdentifyYourselfToTheServer(provider, authData);
+        var dataToReplyWith = {
+            action : PossibleActions.sociallyIdentifyYourself,
+            provider : socialProvider,
+            authData : authData
+        };
+        if(socket && socket.connected) {
+            socket.emit('send', dataToReplyWith);
+        }
     }
     //--
 
@@ -145,6 +152,8 @@ requirejs(['auth/socialsAuthMain'], function(social) {
                 dataToReplyWith.videoState = YT_PlayerState.SEEKING;
                 console.log("Video has been seeked!");
             }
+            // An attempt to prevent sending data to the server when the state
+            // of the player is robotically influenced
             if(shouldPlayerStateChangeBeSilent) {
                 setTimeout(function() {
                     shouldPlayerStateChangeBeSilent = false;
@@ -178,33 +187,17 @@ requirejs(['auth/socialsAuthMain'], function(social) {
         }
     }
 
-    //This should be called after authentication with facebook or google is successful
-    function sociallyIdentifyYourselfToTheServer(socialProvider, userData) {
-        var dataToReplyWith = {
-            action : PossibleActions.sociallyIdentifyYourself,
-            provider : socialProvider,
-            authData : userData
-        };
-        if(socket && socket.connected) {
-            socket.emit('send', dataToReplyWith);
-            //console.log("Sent to server: " + JSON.stringify(dataToReplyWith));
-        }
-    }
-
     function actOnServerMessage(messageData) {
         var action = messageData.action || "";
         var serverRequestArgs = messageData.requestArgs || ""
 
-        if (action != "") {
-            if(action == PossibleActions.identifyUser) {
-                localStorage.setItem(currentUserIdKey, messageData.userId);
-                console.log("userId for user set to: " + messageData.userId);
-
-            } else if(action === PossibleActions.giveMeYourVideoState) {
-                giveTheServerYourState(messageData, action, socket);
-            } else if(action === PossibleActions.takeVideoState) {
-                reflectGottenVideoState(messageData);
-            }
+        if(action == PossibleActions.identifyUser) {
+            localStorage.setItem(currentUserIdKey, messageData.userId);
+            console.log("userId for user set to: " + messageData.userId);
+        } else if(action === PossibleActions.giveMeYourVideoState) {
+            giveTheServerYourState(messageData, action, socket);
+        } else if(action === PossibleActions.takeVideoState) {
+            reflectGottenVideoState(messageData);
         }
     }
 
@@ -232,7 +225,7 @@ requirejs(['auth/socialsAuthMain'], function(social) {
         shouldPlayerStateChangeBeSilent = true;
         timeOfLastPlayerStateChange = new Date();
 
-        //ytplayer.addEventListener("onStateChange", "onPlayerStateChange");
+        player.removeEventListener("onStateChange", "window.onPlayerStateChange");
 
         if(videoState === YT_PlayerState.PLAYING) {
             //player.seekTo(messageData.currentPlayTime, true);
@@ -247,10 +240,8 @@ requirejs(['auth/socialsAuthMain'], function(social) {
                 //player.playVideo();
             }
             player.seekTo(messageData.currentPlayTime, true);
-        } /*else {
-            player.seekTo(messageData.currentPlayTime, true);
-            player.playVideo();
-        } */
+        }
+        player.addEventListener("onStateChange", "window.onPlayerStateChange");
     }
 
     function getVideoStateAsString(videoStateAsInt) {
