@@ -31,7 +31,7 @@ define(function (require) {
 
   // This is called with the results from from FB.getLoginStatus().
   function statusChangeCallback(response) {
-    console.log("FB statusChangeCallback: " + JSON.stringify(response) + "\n");
+    //console.log("FB statusChangeCallback: " + JSON.stringify(response) + "\n");
 
     if (response.status === 'connected') {// Logged into your app and Facebook.
       testAPI(response.authResponse);

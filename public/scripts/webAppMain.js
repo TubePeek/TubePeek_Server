@@ -47,18 +47,10 @@ requirejs(['auth/socialsAuthMain'], function(social) {
     window.setAuthProvider = function(provider, authData) {
         if (provider === 'google') {// Signed in with Google, you can now use Google+ APIs.
             AuthStates.google = authData;
-            //console.log("Google authResult: " + JSON.stringify(AuthStates.google));
-
-            sociallyIdentifyYourselfToTheServer('google', AuthStates.google);
         } else if (provider === 'facebook') {// Not signed in with Google, but signed in with Facebook
             AuthStates.facebook = authData;
-            //console.log("AuthStates.facebook >>: " + JSON.stringify(AuthStates.facebook) + "\n");
-            var userFbFullName = AuthStates.facebook.fullName;
-            var userFbId = AuthStates.facebook.id;
-            //console.log('Successful fb login for: ' + userFbFullName);
-
-            sociallyIdentifyYourselfToTheServer('facebook', AuthStates.facebook);
         }
+        sociallyIdentifyYourselfToTheServer(provider, authData);
     }
     //--
 
@@ -177,17 +169,13 @@ requirejs(['auth/socialsAuthMain'], function(social) {
     }
 
     window.youtubePlayerOnError = function(event) {
-        if(event.data == 2 // Video id not ok
-            || event.data == 100 //Not found
-            || event.data == 101 || 150 // Not allowed for embedding
-        ) {
+        if(event.data == 2 || event.data == 100 || event.data == 101) {
             console.log("Gaddammit!!! A shiznit error occurred!");
         } else if(event.data == 5) {//Video not supported on HTML5
             console.log("Internet connection may be lost.");
         } else {
             console.log("An error still occurred. Don't know what happened.");
         }
-        console.log(event.data);
     }
 
     //This should be called after authentication with facebook or google is successful
@@ -243,6 +231,8 @@ requirejs(['auth/socialsAuthMain'], function(social) {
         var videoState = messageData.videoState;
         shouldPlayerStateChangeBeSilent = true;
         timeOfLastPlayerStateChange = new Date();
+
+        //ytplayer.addEventListener("onStateChange", "onPlayerStateChange");
 
         if(videoState === YT_PlayerState.PLAYING) {
             //player.seekTo(messageData.currentPlayTime, true);

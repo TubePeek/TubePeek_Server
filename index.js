@@ -168,5 +168,6 @@ function actOnClientMessage(socketToAClient, messageData) {
         dataToReplyWith.action = PossibleActions.identifyUser;
 
         theSocket.emit('message', dataToReplyWith);
+        newUserVideoStateInit(theUserId);
     }
 }
