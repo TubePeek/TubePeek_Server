@@ -16,7 +16,6 @@ requirejs(['auth/socialsAuthMain'], function(social) {
     var currentUserIdKey = 'currentUserId';
     var shouldPlayerStateChangeBeSilent = false;
     var timeOfLastPlayerStateChange = new Date();
-    //var communicateToServer = true;
 
     var PossibleActions = {
         identifyUser : 'identifyUser',                         // The server sends this to the client
