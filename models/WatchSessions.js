@@ -1,9 +1,11 @@
 var dbObject = require('./DbObject');
 
 function WatchSessions(tableName) {
-  this.tableName = tableName;
+    this.tableName = tableName;
 }
 
 WatchSessions.prototype = dbObject;
 
-module.exports = new WatchSessions('watchsessions');
+var watchSessionsTable = new WatchSessions('watchsessions');
+
+module.exports = watchSessionsTable;

@@ -1,9 +1,17 @@
 var dbObject = require('./DbObject');
 
 function Videos(tableName) {
-  this.tableName = tableName;
+    this.tableName = tableName;
 }
 
 Videos.prototype = dbObject;
 
-module.exports = new Videos('videos');
+var videosTable = new Videos('videos');
+videosTable.insert = function(insertData, callbackOnInsertDone) {
+    dbObject.knex.insert(insertData).returning('video_id').into(this.tableName)
+    .then(function (id) {
+        callbackOnInsertDone(parseInt(id));
+    });
+}
+
+module.exports = videosTable;

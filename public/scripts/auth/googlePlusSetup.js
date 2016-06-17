@@ -25,10 +25,11 @@ define(function (require) {
                  emailAddress = response.emails[0].value;
                }
              }
-             googleAuthData.userId = response.id;
+             googleAuthData.uid = response.id;
              googleAuthData.emailAddress = emailAddress;
              googleAuthData.fullName = response.displayName;
 
+             //setAuthProvider is defined in the webAppMain.js file
              window.setAuthProvider('google', googleAuthData);
            });
         });
