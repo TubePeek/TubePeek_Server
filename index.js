@@ -1,3 +1,6 @@
+"use strict";
+
+
 var express = require("express");
 var Hashids = require('hashids');
 var Users = require('./models/Users');
@@ -98,13 +101,14 @@ function actOnClientMessage(socketToAClient, messageData) {
 function persistSocialIdentity(socketToSendUserIdTo, socialProvider, authData) {
     Users.findBy('email_address', authData.emailAddress, function(usersFound){
         if(usersFound && usersFound.length > 0) {
-            console.log("\nUser already exists.")
-            SocialIdentities.findByUserIdAndProvider(authData.uid, socialProvider, function(identitiesFound) {
-                if(identitiesFound && identitiesFound.length > 0) {
-                    identitiesFound.some(function(anIdentity) {//Using the Array.prototype.some function is very cool
+            var socialIdentitiesFinder = SocialIdentities.findByUserIdAndProvider(authData.uid, socialProvider);
+
+            socialIdentitiesFinder.then(function(identitiesFound) {
+                if(identitiesFound.length > 0) {
+                    identitiesFound.some(function(anIdentity) {
                         if(anIdentity.provider === socialProvider) {
                             identifyConnectedClient(socketToSendUserIdTo, usersFound[0]['id']);
-                            return true;  // to break the loop
+                            return true;
                         }
                     });
                 } else {

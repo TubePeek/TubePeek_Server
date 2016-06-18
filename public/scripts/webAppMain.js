@@ -1,5 +1,6 @@
 "use strict";
 
+
 requirejs.config({
     baseUrl: 'scripts',
     app: {
