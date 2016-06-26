@@ -1,3 +1,6 @@
+"use strict";
+
+
 var express = require("express");
 var Hashids = require('hashids');
 var Users = require('./models/Users');
@@ -46,7 +49,7 @@ function configureWebServer(appObj) {
 
 function setupCommunications() {
     io.sockets.on('connection', function (socket) {
-        console.log("Got a connection");
+        console.log("\nGot a connection");
 
         socket.on('send', function (data) {
             actOnClientMessage(socket, data);
@@ -54,7 +57,7 @@ function setupCommunications() {
         socket.on('disconnect', function() {
             var userIdOfDisconnectedUser = socket.userId;
             delete connectedUsers[userIdOfDisconnectedUser];
-            console.log("Disconnected userId: " + userIdOfDisconnectedUser);
+            console.log("\nDisconnected userId: " + userIdOfDisconnectedUser);
         });
     });
 }
@@ -63,7 +66,7 @@ function actOnClientMessage(socketToAClient, messageData) {
     var action = messageData.action || "";
 
     if(action === PossibleActions.sociallyIdentifyYourself) {
-        console.log("Got sociallyIdentifyYourself from client: " + JSON.stringify(messageData));
+        console.log("\nGot sociallyIdentifyYourself from client: \n" + JSON.stringify(messageData) + "\n");
         var authData = messageData.authData;
         var socialProvider = messageData.provider;
 
@@ -98,15 +101,16 @@ function actOnClientMessage(socketToAClient, messageData) {
 function persistSocialIdentity(socketToSendUserIdTo, socialProvider, authData) {
     Users.findBy('email_address', authData.emailAddress, function(usersFound){
         if(usersFound && usersFound.length > 0) {
-            console.log("User already exists.")
-            SocialIdentities.findByUserIdAndProvider(authData.uid, socialProvider, function(identitiesFound) {
-                if(identitiesFound && identitiesFound.length > 0) {
-                    for (var anIdentity in identitiesFound) {
+            var socialIdentitiesFinder = SocialIdentities.findByUserIdAndProvider(authData.uid, socialProvider);
+
+            socialIdentitiesFinder.then(function(identitiesFound) {
+                if(identitiesFound.length > 0) {
+                    identitiesFound.some(function(anIdentity) {
                         if(anIdentity.provider === socialProvider) {
                             identifyConnectedClient(socketToSendUserIdTo, usersFound[0]['id']);
-                            break;
+                            return true;
                         }
-                    }
+                    });
                 } else {
                     insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, usersFound[0]['id']);
                 }
@@ -127,7 +131,7 @@ function insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProv
         'access_token' : authData.accessToken, 'expires_at' : authData.accessTokenExpiry
     };
     SocialIdentities.insert(socialIdentityInsertObj, function() {
-        console.log("social identity inserted successfully.");
+        console.log("\nsocial identity inserted successfully.");
         identifyConnectedClient(socketToSendUserIdTo, idOfUser);
     });
 }
@@ -142,6 +146,7 @@ function identifyConnectedClient(theSocket, theUserId) {
     dataToReplyWith.action = PossibleActions.identifyUser;
 
     theSocket.emit('message', dataToReplyWith);
+    console.log("Just sent: " + JSON.stringify(dataToReplyWith) + " to client\n")
     newUserVideoStateInit(theUserId);
 }
 
