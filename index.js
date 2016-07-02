@@ -6,12 +6,17 @@ var Hashids = require('hashids');
 var Users = require('./models/Users');
 var SocialIdentities = require('./models/SocialIdentities');
 
+var scribe = require('scribe-js')(); //loads Scribe
+//Use this import if you want to configure or custom something.
+
 //--
 //Will contain objects with key: userId and value: socketObject
 var connectedUsers = {};
 
 //Contains Session objects ... each session object has a sessionId and a list of users
 //var activeSessions = {};
+var console = process.console;
+
 
 var PossibleActions = {
     identifyUser : 'identifyUser',                         // The server sends this to the client
@@ -45,11 +50,12 @@ function configureWebServer(appObj) {
         res.render("page");
     });
     appObj.use(express.static(__dirname + '/public'));
+    appObj.use('/logs', scribe.webPanel());
 }
 
 function setupCommunications() {
     io.sockets.on('connection', function (socket) {
-        console.log("\nGot a connection");
+        console.time().info("\nGot a connection");
 
         socket.on('send', function (data) {
             actOnClientMessage(socket, data);
@@ -57,7 +63,7 @@ function setupCommunications() {
         socket.on('disconnect', function() {
             var userIdOfDisconnectedUser = socket.userId;
             delete connectedUsers[userIdOfDisconnectedUser];
-            console.log("\nDisconnected userId: " + userIdOfDisconnectedUser);
+            console.time().info("\nDisconnected userId: " + userIdOfDisconnectedUser);
         });
     });
 }

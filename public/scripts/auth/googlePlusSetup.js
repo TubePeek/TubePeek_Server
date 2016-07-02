@@ -34,7 +34,7 @@ define(function (require) {
                     });
                 });
             } else if (authResult['error']) {
-                // There was an error signing the user in
+                console.log("There was an error signing the user in");
             }
         }
     };
