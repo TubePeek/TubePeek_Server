@@ -3,19 +3,22 @@
   "version": "0.0.0",
   "description": "Real time video watching with a friend",
   "dependencies": {
-    "bookshelf": "^0.9.5",
     "express": "latest",
     "hashids": "1.0.1",
-    "jade": "latest",
-    "jasmine-node": "^1.14.5",
     "knex": "^0.11.5",
+    "jade": "latest",
     "parse-database-url": "^0.3.0",
     "pg": "^4.5.5",
     "socket.io": "latest"
   },
+  "devDependencies": {
+    "jasmine-node": "^1.14.5",
+    "scribe-js": "^2.0.4"
+  },
   "main": "index.js",
   "scripts": {
-    "test": "./node_modules/.bin/jasmine-node spec"
+    "test": "./node_modules/.bin/jasmine-node spec",
+    "start": "./node_modules/.bin/nodemon index.js --ignore node_modules/"
   },
   "author": "Ariaroo Efe"
 }

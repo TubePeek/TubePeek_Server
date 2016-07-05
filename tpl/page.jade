@@ -1,16 +1,32 @@
 doctype
 html
-  head
-    title= "Real time web chat"
-  body
-    #player
-    br
-    br
+    head
+        title= "Real time video sync"
+    body
 
-    fb:login-button(scope="public_profile,email" onlogin="checkLoginState();")
+        #player
+        br
+        br
 
-    #status
+        fb:login-button(data-max-rows="1" data-size="medium"
+                        data-show-faces="false" data-auto-logout-link="false"
+                        scope="public_profile,email" onlogin="checkLoginState();")
 
-    script(src='/socket.io/socket.io.js')
-    script(src='/webAppMain.js')
-    script(src='/facebookLoginSetup.js')
+        span#signinButton
+            span.g-signin(data-callback='signinCallback',
+            data-clientid='946104220756-g83q8olnduambr5h8pvvt6vnvqi9di8g.apps.googleusercontent.com',
+            data-cookiepolicy='single_host_origin',
+            data-scope='https://www.googleapis.com/auth/plus.login https://www.googleapis.com/auth/plus.profile.emails.read')
+
+        #status
+
+        //script(src='https://ajax.googleapis.com/ajax/libs/angularjs/1.5.6/angular.min.js')
+        script(src='/scripts/libs/angular.min.js')
+
+        //socket.io MUST come before require.js
+        script(src='/socket.io/socket.io.js')
+
+        //data-main attribute tells require.js to load scripts/main.js after require.js
+        script(src='/scripts/libs/require.js', data-main='/scripts/webAppMain.js')
+
+        script(src='https://apis.google.com/js/client:platform.js' async defer)
