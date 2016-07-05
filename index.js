@@ -137,7 +137,7 @@ function insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProv
         'access_token' : authData.accessToken, 'expires_at' : authData.accessTokenExpiry
     };
     SocialIdentities.insert(socialIdentityInsertObj, function() {
-        console.log("\nsocial identity inserted successfully.");
+        console.time().info("\nsocial identity inserted successfully.");
         identifyConnectedClient(socketToSendUserIdTo, idOfUser);
     });
 }
@@ -152,7 +152,7 @@ function identifyConnectedClient(theSocket, theUserId) {
     dataToReplyWith.action = PossibleActions.identifyUser;
 
     theSocket.emit('message', dataToReplyWith);
-    console.log("Just sent: " + JSON.stringify(dataToReplyWith) + " to client\n")
+    console.time().info("Just sent: " + JSON.stringify(dataToReplyWith) + " to client\n")
     newUserVideoStateInit(theUserId);
 }
 
