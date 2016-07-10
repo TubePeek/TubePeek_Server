@@ -23,19 +23,16 @@ OR
 knex migrate:latest --env production
 ```
 
-
 Running tests:
 ```terminal
 npm test
 ```
 
+To view pretty logs during development:
+```terminal
+http://localhost:3700/logs
+```
+
 Follow this to understand the database migration things with knex:
 - [Knex Database setup tutorial](http://www.dancorman.com/knex-your-sql-best-friend/)
 - [Knex database migration tutorial] (http://alexzywiak.github.io/running-migrations-with-knex/)
-
-
-## TODOS
----------------------
-- video current state for newly connected clients
-- Change youtube video in order to watch something else
-- add video seek action sync functionality
