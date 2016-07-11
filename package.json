@@ -13,6 +13,7 @@
   },
   "devDependencies": {
     "jasmine-node": "^1.14.5",
+    "nodemon": "^1.9.2",
     "scribe-js": "^2.0.4"
   },
   "main": "index.js",
