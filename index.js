@@ -17,7 +17,11 @@ var connectedUsers = {};
 var PossibleActions = {
     identifyUser : 'identifyUser',                         // The server sends this to the client
     sociallyIdentifyYourself : 'sociallyIdentifyYourself', // The client sends this to the server.
-    videoChangedByUser : 'videoChangedByUser',
+
+    userChangedOnlineStatus : 'userChangedOnlineStatus',
+    takeFriendOnlineStatus : 'takeFriendOnlineStatus',
+
+    changedVideo : 'changedVideo',
     takeFriendVideoChange : 'takeFriendVideoChange',
 
     acknowledge : "acknowledge"
@@ -68,24 +72,23 @@ function actOnClientMessage(socketToAClient, messageData) {
         //console.time().info("\nGot sociallyIdentifyYourself from client: \n" + JSON.stringify(messageData) + "\n");
         var authData = messageData.authData;
         var socialProvider = messageData.provider;
-        var friendsList = authData.friendsList;
+        var friendsList = messageData.friendsList;
 
         persistSocialIdentity(socketToAClient, socialProvider, authData, friendsList);
-    } else if(action === PossibleActions.giveMeYourVideoState) {
+    } else if(action === PossibleActions.userChangedOnlineStatus) {
+        console.time().info("Got online status change: " + JSON.stringify(messageData));
         var userIdCausingAction = messageData.userId;
+        var newUserOnlineState = messageData.onlineState;
 
-        var userIdOfWhoWantsVideoState = messageData.userIdOfWhoWantsIt;
-        var socketToSendStateTo = connectedUsers[userIdOfWhoWantsVideoState];
+        var dataToBroadcast = {};
+        dataToBroadcast.action = PossibleActions.takeFriendOnlineStatus;
+        dataToBroadcast.userId = userIdCausingAction;
+        dataToBroadcast.onlineState = newUserOnlineState;
 
-        if(socketToSendStateTo && socketToSendStateTo.connected) {
-            var dataToReplyWith = {};
-            dataToReplyWith.action = PossibleActions.takeVideoState;
-            dataToReplyWith.currentPlayTime = messageData.currentPlayTime;
-            dataToReplyWith.videoState = messageData.videoState;
-
-            socketToSendStateTo.emit('message', dataToReplyWith);
-        }
-    } else if(action === PossibleActions.videoChangedByUser) {
+        var currentUserConnectionData = connectedUsers[userIdCausingAction];
+        io.sockets.in(currentUserConnectionData.myRoom).emit("message", dataToBroadcast);
+    } else if(action === PossibleActions.changedVideo) {
+        console.time().info("Got video change: " + JSON.stringify(messageData));
         var userIdCausingAction = messageData.userId;
         var videoTitle = messageData.videoTitle;
         var videoUrl = messageData.videoUrl;
