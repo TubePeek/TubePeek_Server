@@ -15,8 +15,8 @@ var console = process.console;
 var connectedUsers = {};
 
 var PossibleActions = {
-    identifyUser : 'identifyUser',                         // The server sends this to the client
-    sociallyIdentifyYourself : 'sociallyIdentifyYourself', // The client sends this to the server.
+    sociallyIdentifyYourself : 'sociallyIdentifyYourself',   // The client first sends this to the server
+    identifyUser : 'identifyUser',                           // The server then sends this to the client
 
     userChangedOnlineStatus : 'userChangedOnlineStatus',
     takeFriendOnlineStatus : 'takeFriendOnlineStatus',
@@ -95,8 +95,10 @@ function actOnClientMessage(socketToAClient, messageData) {
 
         var dataToBroadcast = {};
         dataToBroadcast.action = PossibleActions.takeFriendVideoChange;
-        dataToReplyWith.videoTitle = videoTitle;
-        dataToReplyWith.videoUrl = videoUrl;
+        dataToBroadcast.video = {};
+        dataToReplyWith.video.videoTitle = videoTitle;
+        dataToReplyWith.video.videoUrl = videoUrl;
+        dataToReplyWith.video.friend = {};
 
         var currentUserConnectionData = connectedUsers[userIdCausingAction];
         io.sockets.in(currentUserConnectionData.myRoom).emit("message", dataToBroadcast);
@@ -179,10 +181,10 @@ function addSocketToRooms(currentUserSocket, theUserId) {
 
                 if(isMyGoogleFriend(myFriendsList, possibleFriendGoogleId)) {
                     console.time().info("Found a google friend online! google user id: " + possibleFriendGoogleId);
-                    // So any of the current user's friends broadcasts he/she will see it.
+                    // So that any of the current user's friends, broadcasts he/she will see it.
                     possibleFriendConnectedData.socket.join(currentUserConnectionData.myRoom);
 
-                    // So that when current user broadcasts his friends will see it
+                    // So that when current user broadcasts, his friends will see it
                     currentUserSocket.join(possibleFriendConnectedData.myRoom);
                 }
             } else {
