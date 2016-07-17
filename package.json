@@ -5,20 +5,22 @@
   "dependencies": {
     "express": "latest",
     "hashids": "1.0.1",
-    "knex": "^0.11.5",
     "jade": "latest",
+    "knex": "^0.11.5",
     "parse-database-url": "^0.3.0",
     "pg": "^4.5.5",
+    "redis": "^2.6.2",
     "socket.io": "latest"
   },
   "devDependencies": {
     "jasmine-node": "^1.14.5",
+    "nodemon": "^1.9.2",
     "scribe-js": "^2.0.4"
   },
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/.bin/jasmine-node spec",
-    "start": "./node_modules/.bin/nodemon index.js --ignore node_modules/"
+    "start": "./node_modules/.bin/nodemon index.js"
   },
   "author": "Ariaroo Efe"
 }
