@@ -11,6 +11,7 @@ exports.up = function(knex, Promise) {
             table.integer('user_id').references('id').inTable('usermaster');
             table.string('provider');
             table.string('email_address');
+            table.string('full_name');
             table.string('access_token');
             table.string('uid');
             table.string('expires_at');
