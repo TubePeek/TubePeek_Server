@@ -6,26 +6,23 @@ var Hashids = require('hashids');
 var Users = require('./models/Users');
 var SocialIdentities = require('./models/SocialIdentities');
 
-var scribe = require('scribe-js')(); //loads Scribe
-//Use this import if you want to configure or custom something.
-
-//--
-//Will contain objects with key: userId and value: socketObject
-var connectedUsers = {};
-
-//Contains Session objects ... each session object has a sessionId and a list of users
-//var activeSessions = {};
+var scribe = require('scribe-js')();                       // Use this import if you want to configure or custom something.
 var console = process.console;
 
 
+// Will contain objects with key: 'userId' pointing at an object
+// The object will have keys: 'socket', 'googleUserId', 'friendsList', 'myRoom'
+var connectedUsers = {};
+
 var PossibleActions = {
-    identifyUser : 'identifyUser',                         // The server sends this to the client
-    sociallyIdentifyYourself : 'sociallyIdentifyYourself', // The client sends this to the server.
-    videoStateChange : 'videoStateChange',
-    giveMeYourVideoState : 'giveMeYourVideoState',
-    takeVideoState : 'takeVideoState',
-    //videoChangedByUser : 'videoChangedByUser',
-    //roomChange : 'roomChange',
+    sociallyIdentifyYourself : 'sociallyIdentifyYourself',   // The client first sends this to the server
+    identifyUser : 'identifyUser',                           // The server then sends this to the client
+
+    userChangedOnlineStatus : 'userChangedOnlineStatus',
+    takeFriendOnlineStatus : 'takeFriendOnlineStatus',
+
+    changedVideo : 'changedVideo',
+    takeFriendVideoChange : 'takeFriendVideoChange',
 
     acknowledge : "acknowledge"
 };
@@ -61,9 +58,9 @@ function setupCommunications() {
             actOnClientMessage(socket, data);
         });
         socket.on('disconnect', function() {
-            var userIdOfDisconnectedUser = socket.userId;
-            delete connectedUsers[userIdOfDisconnectedUser];
-            console.time().info("\nDisconnected userId: " + userIdOfDisconnectedUser);
+            var disconnectedUserId = socket.userId;
+            delete connectedUsers[disconnectedUserId];
+            console.time().info("\nDisconnected userId: " + disconnectedUserId);
         });
     });
 }
@@ -72,39 +69,43 @@ function actOnClientMessage(socketToAClient, messageData) {
     var action = messageData.action || "";
 
     if(action === PossibleActions.sociallyIdentifyYourself) {
-        console.log("\nGot sociallyIdentifyYourself from client: \n" + JSON.stringify(messageData) + "\n");
+        //console.time().info("\nGot sociallyIdentifyYourself from client: \n" + JSON.stringify(messageData) + "\n");
         var authData = messageData.authData;
         var socialProvider = messageData.provider;
+        var friendsList = messageData.friendsList;
 
-        persistSocialIdentity(socketToAClient, socialProvider, authData);
-    } else if(action === PossibleActions.giveMeYourVideoState) {
+        persistSocialIdentity(socketToAClient, socialProvider, authData, friendsList);
+    } else if(action === PossibleActions.userChangedOnlineStatus) {
+        console.time().info("Got online status change: " + JSON.stringify(messageData));
         var userIdCausingAction = messageData.userId;
+        var newUserOnlineState = messageData.onlineState;
 
-        var userIdOfWhoWantsVideoState = messageData.userIdOfWhoWantsIt;
-        var socketToSendStateTo = connectedUsers[userIdOfWhoWantsVideoState];
+        var dataToBroadcast = {};
+        dataToBroadcast.action = PossibleActions.takeFriendOnlineStatus;
+        dataToBroadcast.userId = userIdCausingAction;
+        dataToBroadcast.onlineState = newUserOnlineState;
 
-        if(socketToSendStateTo && socketToSendStateTo.connected) {
-            var dataToReplyWith = {};
-            dataToReplyWith.action = PossibleActions.takeVideoState;
-            dataToReplyWith.currentPlayTime = messageData.currentPlayTime;
-            dataToReplyWith.videoState = messageData.videoState;
-
-            socketToSendStateTo.emit('message', dataToReplyWith);
-        }
-    } else if(action === PossibleActions.videoStateChange) {
+        var currentUserConnectionData = connectedUsers[userIdCausingAction];
+        io.sockets.in(currentUserConnectionData.myRoom).emit("message", dataToBroadcast);
+    } else if(action === PossibleActions.changedVideo) {
+        console.time().info("Got video change: " + JSON.stringify(messageData));
         var userIdCausingAction = messageData.userId;
-        var theState = messageData.videoState;
+        var videoTitle = messageData.videoTitle;
+        var videoUrl = messageData.videoUrl;
 
-        var dataToReplyWith = {};
-        dataToReplyWith.action = PossibleActions.takeVideoState;
-        dataToReplyWith.currentPlayTime = messageData.currentPlayTime;
-        dataToReplyWith.videoState = theState;
+        var dataToBroadcast = {};
+        dataToBroadcast.action = PossibleActions.takeFriendVideoChange;
+        dataToBroadcast.video = {};
+        dataToReplyWith.video.videoTitle = videoTitle;
+        dataToReplyWith.video.videoUrl = videoUrl;
+        dataToReplyWith.video.friend = {};
 
-        socketToAClient.broadcast.emit('message', dataToReplyWith);
+        var currentUserConnectionData = connectedUsers[userIdCausingAction];
+        io.sockets.in(currentUserConnectionData.myRoom).emit("message", dataToBroadcast);
     }
 }
 
-function persistSocialIdentity(socketToSendUserIdTo, socialProvider, authData) {
+function persistSocialIdentity(socketToSendUserIdTo, socialProvider, authData, friendsList) {
     Users.findBy('email_address', authData.emailAddress, function(usersFound){
         if(usersFound && usersFound.length > 0) {
             var socialIdentitiesFinder = SocialIdentities.findByUserIdAndProvider(authData.uid, socialProvider);
@@ -113,23 +114,23 @@ function persistSocialIdentity(socketToSendUserIdTo, socialProvider, authData) {
                 if(identitiesFound.length > 0) {
                     identitiesFound.some(function(anIdentity) {
                         if(anIdentity.provider === socialProvider) {
-                            identifyConnectedClient(socketToSendUserIdTo, usersFound[0]['id']);
+                            identifyConnectedClient(socketToSendUserIdTo, usersFound[0]['id'], authData.uid, friendsList);
                             return true;
                         }
                     });
                 } else {
-                    insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, usersFound[0]['id']);
+                    insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, usersFound[0]['id'], friendsList);
                 }
             });
         } else {
             Users.insert({'email_address': authData.emailAddress}, function(idOfNewUser) {
-                insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, idOfNewUser);
+                insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, idOfNewUser, friendsList);
             });
         }
     });
 }
 
-function insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, idOfUser) {
+function insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, idOfUser, friendsList) {
     var socialIdentityInsertObj = {
         'user_id' : idOfUser, 'uid' : authData.uid,
         'provider' : socialProvider,
@@ -138,39 +139,66 @@ function insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProv
     };
     SocialIdentities.insert(socialIdentityInsertObj, function() {
         console.time().info("\nsocial identity inserted successfully.");
-        identifyConnectedClient(socketToSendUserIdTo, idOfUser);
+        identifyConnectedClient(socketToSendUserIdTo, idOfUser, authData.uid, friendsList);
     });
 }
 
 //This sends the unique userId to the newly connected client
-function identifyConnectedClient(theSocket, theUserId) {
+function identifyConnectedClient(theSocket, theUserId, googleUserId, friendsList) {
     theSocket.userId = theUserId;
-    connectedUsers[theUserId] = theSocket;
+    theSocket.myRoom = "room_" + theUserId;
+    var connectedUserObj = {
+        'socket' : theSocket,
+        'googleUserId' : googleUserId,
+        'friendsList' : friendsList,
+        'myRoom' : "room_" + theUserId
+    };
+    connectedUsers[theUserId] = connectedUserObj;
+    console.time().info("in-memory store of friendsList for userId: " + theUserId);
+    //--
+    addSocketToRooms(theSocket, theUserId);
 
     var dataToReplyWith = {};
     dataToReplyWith.userId = theUserId;
     dataToReplyWith.action = PossibleActions.identifyUser;
 
     theSocket.emit('message', dataToReplyWith);
-    console.time().info("Just sent: " + JSON.stringify(dataToReplyWith) + " to client\n")
-    newUserVideoStateInit(theUserId);
+    //console.time().info("Just sent: " + JSON.stringify(dataToReplyWith) + " to client\n");
 }
 
-//Here, I try to get video state from any other connected user
-function newUserVideoStateInit(userIdOfWhoWantsVideoState) {
-    for (var aUserId in connectedUsers) {
-        if(connectedUsers.hasOwnProperty(aUserId)) {
-            if(aUserId !== userIdOfWhoWantsVideoState) {
-                var dataToReplyWith = {};
-                dataToReplyWith.action = PossibleActions.giveMeYourVideoState;
-                dataToReplyWith.userIdOfWhoWantsIt = userIdOfWhoWantsVideoState;
+function addSocketToRooms(currentUserSocket, theUserId) {
+    theUserId = theUserId + '';                                                 // VERY IMPORTANT! FOR EQUALITY CHECK BELOW
+    var currentUserConnectionData = connectedUsers[theUserId];
+    var myFriendsList = currentUserConnectionData['friendsList'];
 
-                var socketToAskForVideoState = connectedUsers[aUserId];
-                if(socketToAskForVideoState && socketToAskForVideoState.connected) {
-                    socketToAskForVideoState.emit('message', dataToReplyWith);
-                    break;
+    for (var aPossibleFriendUserId in connectedUsers) {
+        if(connectedUsers.hasOwnProperty(aPossibleFriendUserId)) {
+            aPossibleFriendUserId = aPossibleFriendUserId + '';                 // VERY IMPORTANT! FOR EQUALITY CHECK BELOW
+            if (aPossibleFriendUserId !== theUserId) {
+                var possibleFriendConnectedData = connectedUsers[aPossibleFriendUserId];
+                var possibleFriendGoogleId = possibleFriendConnectedData['googleUserId'];
+                console.time().info("possibleFriendGoogleId: " + possibleFriendGoogleId);
+
+                if(isMyGoogleFriend(myFriendsList, possibleFriendGoogleId)) {
+                    console.time().info("Found a google friend online! google user id: " + possibleFriendGoogleId);
+                    // So that any of the current user's friends, broadcasts he/she will see it.
+                    possibleFriendConnectedData.socket.join(currentUserConnectionData.myRoom);
+
+                    // So that when current user broadcasts, his friends will see it
+                    currentUserSocket.join(possibleFriendConnectedData.myRoom);
                 }
+            } else {
+                console.time().info("In addSocketToRooms ... finding friends! Skipped myself");
             }
         }
-    }// end of for loop
+    }
+}
+
+function isMyGoogleFriend(myFriendsList, otherGoogleUserId) {
+    myFriendsList.forEach(function(aFriend) {
+        if(aFriend.id === otherGoogleUserId)
+            return true;
+        else
+            return false;
+    });
 }
