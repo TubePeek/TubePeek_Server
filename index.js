@@ -9,10 +9,15 @@ var SocialIdentities = require('./models/SocialIdentities');
 var scribe = require('scribe-js')();                       // Use this import if you want to configure or custom something.
 var console = process.console;
 
-
-// Will contain objects with key: 'userId' pointing at an object
+// Will contain objects, with a userId value pointing at an object
 // The object will have keys: 'socket', 'googleUserId', 'friendsList', 'myRoom'
 var connectedUsers = {};
+var CONN_DATA_KEYS = {
+    SOCKET : 'socket',
+    GOOGLE_USER_ID : 'googleUserId',
+    FRIENDS_LIST : 'friendsList',
+    MY_ROOM: 'myRoom'
+};
 
 var PossibleActions = {
     sociallyIdentifyYourself : 'sociallyIdentifyYourself',   // The client first sends this to the server
@@ -27,13 +32,11 @@ var PossibleActions = {
     acknowledge : "acknowledge"
 };
 
-
 var app = express();
 var port = 3700;
 configureWebServer(app);
 
 var server = app.listen(port);
-console.log("Listening on port: " + port);
 
 var io = require('socket.io').listen(server);
 setupCommunications();
@@ -47,29 +50,29 @@ function configureWebServer(appObj) {
         res.render("page");
     });
     appObj.use(express.static(__dirname + '/public'));
-    appObj.use('/logs', scribe.webPanel());
+    //appObj.use('/logs', scribe.webPanel());
 }
 
 function setupCommunications() {
     io.sockets.on('connection', function (socket) {
-        console.time().info("\nGot a connection");
+        console.time().info("\nGot a connection!");
 
         socket.on('send', function (data) {
             actOnClientMessage(socket, data);
         });
         socket.on('disconnect', function() {
             var disconnectedUserId = socket.userId;
-            delete connectedUsers[disconnectedUserId];
             console.time().info("\nDisconnected userId: " + disconnectedUserId);
+            delete connectedUsers[disconnectedUserId];
         });
     });
+    console.time().info("\nServer initialization done. Ready to receive requests.");
 }
 
 function actOnClientMessage(socketToAClient, messageData) {
     var action = messageData.action || "";
 
     if(action === PossibleActions.sociallyIdentifyYourself) {
-        //console.time().info("\nGot sociallyIdentifyYourself from client: \n" + JSON.stringify(messageData) + "\n");
         var authData = messageData.authData;
         var socialProvider = messageData.provider;
         var friendsList = messageData.friendsList;
@@ -108,7 +111,7 @@ function actOnClientMessage(socketToAClient, messageData) {
 function persistSocialIdentity(socketToSendUserIdTo, socialProvider, authData, friendsList) {
     Users.findBy('email_address', authData.emailAddress, function(usersFound){
         if(usersFound && usersFound.length > 0) {
-            var socialIdentitiesFinder = SocialIdentities.findByUserIdAndProvider(authData.uid, socialProvider);
+            var socialIdentitiesFinder = SocialIdentities.findByUIdAndProvider(authData.uid, socialProvider);
 
             socialIdentitiesFinder.then(function(identitiesFound) {
                 if(identitiesFound.length > 0) {
@@ -119,43 +122,34 @@ function persistSocialIdentity(socketToSendUserIdTo, socialProvider, authData, f
                         }
                     });
                 } else {
-                    insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, usersFound[0]['id'], friendsList);
+                    insertSocialIdentityThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, usersFound[0]['id'], friendsList);
                 }
             });
         } else {
             Users.insert({'email_address': authData.emailAddress}, function(idOfNewUser) {
-                insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, idOfNewUser, friendsList);
+                insertSocialIdentityThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, idOfNewUser, friendsList);
             });
         }
     });
 }
 
-function insertSocialIdentifyThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, idOfUser, friendsList) {
-    var socialIdentityInsertObj = {
-        'user_id' : idOfUser, 'uid' : authData.uid,
-        'provider' : socialProvider,
-        'email_address' : authData.emailAddress, 'full_name' : authData.fullName,
-        'access_token' : authData.accessToken, 'expires_at' : authData.accessTokenExpiry
-    };
-    SocialIdentities.insert(socialIdentityInsertObj, function() {
-        console.time().info("\nsocial identity inserted successfully.");
+function insertSocialIdentityThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, idOfUser, friendsList) {
+    SocialIdentities.insertSocialIdentify(socialProvider, authData, idOfUser, function() {
+        console.time().info("\nSocial identity inserted successfully.");
         identifyConnectedClient(socketToSendUserIdTo, idOfUser, authData.uid, friendsList);
     });
 }
-
 //This sends the unique userId to the newly connected client
 function identifyConnectedClient(theSocket, theUserId, googleUserId, friendsList) {
     theSocket.userId = theUserId;
-    theSocket.myRoom = "room_" + theUserId;
-    var connectedUserObj = {
-        'socket' : theSocket,
-        'googleUserId' : googleUserId,
-        'friendsList' : friendsList,
-        'myRoom' : "room_" + theUserId
-    };
+
+    var connectedUserObj = {};
+    connectedUserObj[CONN_DATA_KEYS.SOCKET] = theSocket;
+    connectedUserObj[CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
+    connectedUserObj[CONN_DATA_KEYS.FRIENDS_LIST] = friendsList;
+    connectedUserObj[CONN_DATA_KEYS.MY_ROOM] = "room_" + theUserId;
+
     connectedUsers[theUserId] = connectedUserObj;
-    console.time().info("in-memory store of friendsList for userId: " + theUserId);
-    //--
     addSocketToRooms(theSocket, theUserId);
 
     var dataToReplyWith = {};
@@ -167,38 +161,33 @@ function identifyConnectedClient(theSocket, theUserId, googleUserId, friendsList
 }
 
 function addSocketToRooms(currentUserSocket, theUserId) {
-    theUserId = theUserId + '';                                                 // VERY IMPORTANT! FOR EQUALITY CHECK BELOW
+    theUserId += '';                                                 // VERY IMPORTANT! FOR EQUALITY CHECK BELOW
     var currentUserConnectionData = connectedUsers[theUserId];
-    var myFriendsList = currentUserConnectionData['friendsList'];
+    var myFriendsList = currentUserConnectionData[CONN_DATA_KEYS.FRIENDS_LIST];
 
     for (var aPossibleFriendUserId in connectedUsers) {
         if(connectedUsers.hasOwnProperty(aPossibleFriendUserId)) {
-            aPossibleFriendUserId = aPossibleFriendUserId + '';                 // VERY IMPORTANT! FOR EQUALITY CHECK BELOW
-            if (aPossibleFriendUserId !== theUserId) {
+            aPossibleFriendUserId += '';                                       // VERY IMPORTANT! FOR EQUALITY CHECK BELOW
+            if (aPossibleFriendUserId !== theUserId) {//To skip myself
                 var possibleFriendConnectedData = connectedUsers[aPossibleFriendUserId];
-                var possibleFriendGoogleId = possibleFriendConnectedData['googleUserId'];
+                var possibleFriendGoogleId = possibleFriendConnectedData[CONN_DATA_KEYS.GOOGLE_USER_ID];
                 console.time().info("possibleFriendGoogleId: " + possibleFriendGoogleId);
 
                 if(isMyGoogleFriend(myFriendsList, possibleFriendGoogleId)) {
                     console.time().info("Found a google friend online! google user id: " + possibleFriendGoogleId);
-                    // So that any of the current user's friends, broadcasts he/she will see it.
-                    possibleFriendConnectedData.socket.join(currentUserConnectionData.myRoom);
+                    // So that any of the current user's friends can broadcast and the current user will see it.
+                    possibleFriendConnectedData.socket.join(currentUserConnectionData.MY_ROOM);
 
-                    // So that when current user broadcasts, his friends will see it
-                    currentUserSocket.join(possibleFriendConnectedData.myRoom);
+                    // So that when the current user broadcasts, his friends will see it
+                    currentUserSocket.join(possibleFriendConnectedData.MY_ROOM);
                 }
-            } else {
-                console.time().info("In addSocketToRooms ... finding friends! Skipped myself");
             }
         }
     }
 }
 
 function isMyGoogleFriend(myFriendsList, otherGoogleUserId) {
-    myFriendsList.forEach(function(aFriend) {
-        if(aFriend.id === otherGoogleUserId)
-            return true;
-        else
-            return false;
+    myFriendsList.some(function(aFriend) {
+        return (aFriend.id === otherGoogleUserId);
     });
 }
