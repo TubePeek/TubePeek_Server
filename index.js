@@ -198,7 +198,11 @@ function addSocketToRooms(currentUserSocket, theUserId) {
 }
 
 function isMyGoogleFriend(myFriendsList, otherGoogleUserId) {
-    myFriendsList.some(function(aFriend) {
-        return (aFriend.id === otherGoogleUserId);
-    });
+    for(var i = 0; i < myFriendsList.length; i++) {
+        if(myFriendsList[i].id == otherGoogleUserId) {
+            return true;
+        } else if(i == myFriendsList.length - 1) {
+            return false;
+        }
+    }
 }
