@@ -1,4 +1,21 @@
-function getProductionDbConfig () {
+
+function getDevDbConfig() {
+    return {
+        client: 'pg',
+        connection: {
+            host : '127.0.0.1',
+            user : 'postgres',
+            password : 'asdffdsa',
+            database : 'watchwithdb'
+        }
+    };
+}
+
+function getDigitalOceanDbConfig() {
+    return getDevDbConfig();
+}
+
+function getHerokuProductionDbConfig () {
     var theDbConfig = null;
 
     if (process.env.HEROKU_POSTGRESQL_BRONZE_URL) {
@@ -18,14 +35,7 @@ function getProductionDbConfig () {
 }
 
 module.exports = {
-    production: getProductionDbConfig(),
-    development: {
-        client: 'pg',
-        connection: {
-            host : '127.0.0.1',
-            user : 'postgres',
-            password : 'asdffdsa',
-            database : 'watchwithdb'
-        }
-    }
+    HerokuProduction: getHerokuProductionDbConfig(),
+    DigitalOceanProduction: getDigitalOceanDbConfig(),
+    development: getDevDbConfig()
 }

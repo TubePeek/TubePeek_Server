@@ -1,8 +1,14 @@
-var config      = require('./knexfile.js');
+var config = require('./knexfile.js');
 
-var env         = 'development';
-var knex        = require('knex')(config[env]);
+var dbEnvVariable = 'WatchWith_DbEnv';
 
-module.exports = knex;
+if (process.env[dbEnvVariable] === undefined){
+    throw new Error('You must create an environment variable for ' + dbEnvVariable);
+} else {
+    var dbEnv = process.env[dbEnvVariable];
+    console.log("WatchWith_DbEnv: " + dbEnv);
+    var knex = require('knex')(config[dbEnv]);
 
-knex.migrate.latest([config]);
+    module.exports = knex;
+    knex.migrate.latest([config]);
+}

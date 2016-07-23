@@ -58,7 +58,9 @@ function setupCommunications() {
         console.time().info("\nGot a connection!");
 
         socket.on('send', function (data) {
-            actOnClientMessage(socket, data);
+            var clientAction = data.action || "";
+            var reaction = clientActionSelector[clientAction];
+            reaction(socket, data); // For every action demands a reaction!
         });
         socket.on('disconnect', function() {
             var disconnectedUserId = socket.userId;
@@ -68,15 +70,6 @@ function setupCommunications() {
     });
     console.time().info("\nServer initialization done. Ready to receive requests.");
 }
-
-
-function actOnClientMessage(socketToAClient, messageData) {
-    var clientAction = messageData.action || "";
-
-    var reaction = clientActionSelector[clientAction];
-    reaction(socketToAClient, messageData); // For every action demands a reaction!
-}
-
 
 var clientActionSelector = {
     'sociallyIdentifyYourself' : sociallyIdentifyYourself,
