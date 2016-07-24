@@ -10,12 +10,12 @@ var scribe = require('scribe-js')();                       // Use this import if
 var console = process.console;
 
 // Will contain objects, with a userEmail value pointing at an object
-// The object will have keys: 'socket', 'googleUserId', 'friendsList', 'myRoom'
+// The object will have keys: 'socketId', 'googleUserId', 'friendsList', 'myRoom'
 var connectedUsers = {};
 
 // This is necessary so that I don't use magic strings everywhere
 var CONN_DATA_KEYS = {
-    SOCKET : 'socket',
+    SOCKET_ID : 'socketId',
     GOOGLE_USER_ID : 'googleUserId',
     FRIENDS_LIST : 'friendsList',
     MY_ROOM: 'myRoom'
@@ -157,7 +157,7 @@ function takeVideosBeingWatched(theSocket, userEmail, googleUserId, friendsList)
     theSocket['userEmail'] = userEmail;
 
     var connectedUserObj = {};
-    connectedUserObj[CONN_DATA_KEYS.SOCKET] = theSocket;
+    connectedUserObj[CONN_DATA_KEYS.SOCKET_ID] = theSocket.id;
     connectedUserObj[CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
     connectedUserObj[CONN_DATA_KEYS.FRIENDS_LIST] = friendsList;
     connectedUserObj[CONN_DATA_KEYS.MY_ROOM] = "room_" + googleUserId;
@@ -193,14 +193,20 @@ function addSocketToRooms(currentUserSocket, userEmail) {
                     console.time().info("Found a google friend online! google user id: " + possibleFriendGoogleId);
                     friendsWhoAreWatchingStuff.push(possibleFriendConnectedData);
 
-                    var myRoom = currentUserConnectionData[CONN_DATA_KEYS.MY_ROOM];
-                    console.time().info("myRoom: " + myRoom);
-                    possibleFriendConnectedData[CONN_DATA_KEYS.SOCKET].join(myRoom);
+                    var friendSocket = io.sockets.connected[possibleFriendConnectedData[CONN_DATA_KEYS.SOCKET_ID]];
+                    if(friendSocket) {
+                        console.log("Found socket for friend");
+                                                
+                        var myRoom = currentUserConnectionData[CONN_DATA_KEYS.MY_ROOM];
+                        console.time().info("myRoom: " + myRoom);
+                        friendSocket.join(myRoom);
+                        console.time().info("Added my friend's socket to my room.");
 
-                    var myFriendsRoom = possibleFriendConnectedData[CONN_DATA_KEYS.MY_ROOM];
-                    console.time().info("myFriendsRoom: " + myFriendsRoom);
-                    currentUserSocket.join(myFriendsRoom);
-                    console.time().info("Added socket to the right rooms.");
+                        var myFriendsRoom = possibleFriendConnectedData[CONN_DATA_KEYS.MY_ROOM];
+                        console.time().info("myFriendsRoom: " + myFriendsRoom);
+                        currentUserSocket.join(myFriendsRoom);
+                        console.time().info("Added my socket to friend's room.");
+                    }
                 }
             }
         }
