@@ -124,19 +124,19 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
 
 function changedVideo (socketToAClient, messageData) {
     console.time().info("\nIn changedVideo! Got video change: \n" + JSON.stringify(messageData));
-    var userIdCausingAction = messageData.userId;
-    var videoTitle = messageData.videoTitle;
-    var videoUrl = messageData.videoUrl;
-
-    var dataToBroadcast = {};
-    dataToBroadcast.action = PossibleActions.takeFriendVideoChange;
-    dataToBroadcast.video = {};
-    dataToReplyWith.video.videoTitle = videoTitle;
-    dataToReplyWith.video.videoUrl = videoUrl;
-    dataToReplyWith.video.friend = {};
-
-    var currentUserConnectionData = connectedUsers[userIdCausingAction];
-    io.sockets.in(currentUserConnectionData.myRoom).emit("message", dataToBroadcast);
+    // var userIdCausingAction = messageData.userId;
+    // var videoTitle = messageData.videoTitle;
+    // var videoUrl = messageData.videoUrl;
+    //
+    // var dataToBroadcast = {};
+    // dataToBroadcast.action = PossibleActions.takeFriendVideoChange;
+    // dataToBroadcast.video = {};
+    // dataToBroadcast.video.videoTitle = videoTitle;
+    // dataToBroadcast.video.videoUrl = videoUrl;
+    // dataToBroadcast.video.friend = {};
+    //
+    // var currentUserConnectionData = connectedUsers[userIdCausingAction];
+    // io.sockets.in(currentUserConnectionData.myRoom).emit("message", dataToBroadcast);
 }
 //- End of core client actions
 
