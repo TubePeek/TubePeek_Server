@@ -1,6 +1,6 @@
 "use strict";
 
-
+var http = require('http');
 var express = require("express");
 var Hashids = require('hashids');
 var Users = require('./models/Users');
@@ -129,10 +129,11 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
 
 function changedVideo (socketToAClient, messageData) {
     console.time().info("\nIn changedVideo! Got video change: \n" + JSON.stringify(messageData));
-    // var userIdCausingAction = messageData.userId;
-    // var videoTitle = messageData.videoTitle;
-    // var videoUrl = messageData.videoUrl;
-    //
+
+    var userEmail = messageData.userEmail;
+    var videoUrl = messageData.videoUrl;
+    getVideoDetails(messageData.videoUrl);
+
     // var dataToBroadcast = {};
     // dataToBroadcast.action = PossibleActions.takeFriendVideoChange;
     // dataToBroadcast.video = {};
@@ -196,7 +197,7 @@ function addSocketToRooms(currentUserSocket, userEmail) {
                     var friendSocket = io.sockets.connected[possibleFriendConnectedData[CONN_DATA_KEYS.SOCKET_ID]];
                     if(friendSocket) {
                         console.log("Found socket for friend");
-                                                
+
                         var myRoom = currentUserConnectionData[CONN_DATA_KEYS.MY_ROOM];
                         console.time().info("myRoom: " + myRoom);
                         friendSocket.join(myRoom);
@@ -222,4 +223,32 @@ function isMyGoogleFriend(myFriendsList, otherGoogleUserId) {
             return false;
         }
     }
+}
+
+function getVideoDetails(youtubeVideoUrl) {
+    var pathParam = '/oembed?url=' + youtubeVideoUrl + '&format=json';
+    var options = {
+        host: 'www.youtube.com',
+        path: pathParam
+    };
+
+    var req = http.get(options, function(res) {
+        console.log('STATUS: ' + res.statusCode);
+        console.log('HEADERS: ' + JSON.stringify(res.headers));
+
+        // Buffer the body entirely for processing as a whole.
+        var bodyChunks = [];
+        res.on('data', function(chunk) {
+            // You can process streamed parts here...
+            bodyChunks.push(chunk);
+        }).on('end', function() {
+            var body = Buffer.concat(bodyChunks);
+            console.time().info('BODY: ' + body);
+            // ...and/or process the entire body here.
+        })
+    });
+
+    req.on('error', function(e) {
+        console.log('ERROR: ' + e.message);
+    });
 }
