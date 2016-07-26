@@ -1,10 +1,10 @@
 "use strict";
 
-var http = require('http');
 var express = require("express");
 var Hashids = require('hashids');
 var Users = require('./models/Users');
 var SocialIdentities = require('./models/SocialIdentities');
+var Utils = require('./Utils');
 
 var scribe = require('scribe-js')();                       // Use this import if you want to configure or custom something.
 var console = process.console;
@@ -129,20 +129,27 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
 
 function changedVideo (socketToAClient, messageData) {
     console.time().info("\nIn changedVideo! Got video change: \n" + JSON.stringify(messageData));
-
     var userEmail = messageData.userEmail;
     var videoUrl = messageData.videoUrl;
-    getVideoDetails(messageData.videoUrl);
 
-    // var dataToBroadcast = {};
-    // dataToBroadcast.action = PossibleActions.takeFriendVideoChange;
-    // dataToBroadcast.video = {};
-    // dataToBroadcast.video.videoTitle = videoTitle;
-    // dataToBroadcast.video.videoUrl = videoUrl;
-    // dataToBroadcast.video.friend = {};
-    //
-    // var currentUserConnectionData = connectedUsers[userIdCausingAction];
-    // io.sockets.in(currentUserConnectionData.myRoom).emit("message", dataToBroadcast);
+    var pathParam = '/oembed?url=' + messageData.videoUrl + '&format=json';
+    Utils.doGet('www.youtube.com', pathParam, function(response) {
+        console.time().info("Cool! Got video details");
+        var videoDetails = JSON.parse(response);
+
+        var dataToBroadcast = {};
+        dataToBroadcast.action = PossibleActions.takeFriendVideoChange;
+        dataToBroadcast.video = {};
+        dataToBroadcast.video.title = videoDetails.title;
+        dataToBroadcast.video.videoUrl = videoUrl;
+        dataToBroadcast.video.thumbnail_url = videoDetails.thumbnail_url;
+        dataToBroadcast.video.userEmail = userEmail;
+
+        var currentUserConnectionData = connectedUsers[userEmail];
+        var roomToBroadcastTo = currentUserConnectionData[CONN_DATA_KEYS.MY_ROOM];
+        console.time().info("Room to broadcast to: " + roomToBroadcastTo);
+        socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
+    });
 }
 //- End of core client actions
 
@@ -190,7 +197,7 @@ function addSocketToRooms(currentUserSocket, userEmail) {
                 var possibleFriendGoogleId = possibleFriendConnectedData[CONN_DATA_KEYS.GOOGLE_USER_ID];
                 console.time().info("possibleFriendGoogleId: " + possibleFriendGoogleId);
 
-                if(isMyGoogleFriend(myFriendsList, possibleFriendGoogleId)) {
+                if(Utils.isMyGoogleFriend(myFriendsList, possibleFriendGoogleId)) {
                     console.time().info("Found a google friend online! google user id: " + possibleFriendGoogleId);
                     friendsWhoAreWatchingStuff.push(possibleFriendConnectedData);
 
@@ -213,42 +220,4 @@ function addSocketToRooms(currentUserSocket, userEmail) {
         }
     }
     return friendsWhoAreWatchingStuff;
-}
-
-function isMyGoogleFriend(myFriendsList, otherGoogleUserId) {
-    for(var i = 0; i < myFriendsList.length; i++) {
-        if(myFriendsList[i].id == otherGoogleUserId) {
-            return true;
-        } else if(i == myFriendsList.length - 1) {
-            return false;
-        }
-    }
-}
-
-function getVideoDetails(youtubeVideoUrl) {
-    var pathParam = '/oembed?url=' + youtubeVideoUrl + '&format=json';
-    var options = {
-        host: 'www.youtube.com',
-        path: pathParam
-    };
-
-    var req = http.get(options, function(res) {
-        console.log('STATUS: ' + res.statusCode);
-        console.log('HEADERS: ' + JSON.stringify(res.headers));
-
-        // Buffer the body entirely for processing as a whole.
-        var bodyChunks = [];
-        res.on('data', function(chunk) {
-            // You can process streamed parts here...
-            bodyChunks.push(chunk);
-        }).on('end', function() {
-            var body = Buffer.concat(bodyChunks);
-            console.time().info('BODY: ' + body);
-            // ...and/or process the entire body here.
-        })
-    });
-
-    req.on('error', function(e) {
-        console.log('ERROR: ' + e.message);
-    });
 }
