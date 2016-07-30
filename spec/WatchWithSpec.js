@@ -22,16 +22,14 @@ describe("Database tests", function() {
         it("> Video insert, retrieve and delete", function() {
             var videoInsertObj = {
                 'video_url' : 'http://thefinebros',
-                'video_title' : 'preacher',
-                'video_summary' : 'Salvation is not for sale today',
-                'video_type' : "Conspiracy"
+                'video_title' : 'preacher'
             };
             Videos.insert(videoInsertObj, function(idOfNewVideo) {
-                Videos.findBy('video_id', idOfNewVideo, function(videoResults) {
+                Videos.findBy('id', idOfNewVideo, function(videoResults) {
                     expect(videoResults.length).toEqual(1);
                     expect(videoResults[0].video_title).toEqual("preacher");
 
-                    Videos.deleteBy('video_id', videoResults[0]['video_id'], function(deleteReturn) {
+                    Videos.deleteBy('id', videoResults[0]['id'], function(deleteReturn) {
                         expect(deleteReturn).toEqual(1);
                     });
                 });
