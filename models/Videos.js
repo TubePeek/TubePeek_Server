@@ -8,7 +8,7 @@ Videos.prototype = dbObject;
 
 var videosTable = new Videos('videos');
 videosTable.insert = function(insertData, callbackOnInsertDone) {
-    dbObject.knex.insert(insertData).returning('video_id').into(this.tableName)
+    dbObject.knex.insert(insertData).returning('id').into(this.tableName)
     .then(function (id) {
         callbackOnInsertDone(parseInt(id));
     });

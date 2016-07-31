@@ -4,42 +4,17 @@ var express = require("express");
 var Hashids = require('hashids');
 var Users = require('./models/Users');
 var SocialIdentities = require('./models/SocialIdentities');
+var Constants = require('./Constants');
 var Utils = require('./Utils');
 
 var scribe = require('scribe-js')();                       // Use this import if you want to configure or custom something.
 var console = process.console;
 
-// Will contain objects, with a userEmail value pointing at an object
-// The object will have keys: 'socketId', 'googleUserId', 'friendsList', 'myRoom'
-var connectedUsers = {};
-
-// This is necessary so that I don't use magic strings everywhere
-var CONN_DATA_KEYS = {
-    SOCKET_ID : 'socketId',
-    GOOGLE_USER_ID : 'googleUserId',
-    FRIENDS_LIST : 'friendsList',
-    MY_ROOM: 'myRoom'
-};
-
-var PossibleActions = {
-    sociallyIdentifyYourself : 'sociallyIdentifyYourself',   // The client first sends this to the server
-    takeVideosBeingWatched : 'takeVideosBeingWatched',       // The server then sends this to the client
-
-    userChangedOnlineStatus : 'userChangedOnlineStatus',
-    takeFriendOnlineStatus : 'takeFriendOnlineStatus',
-
-    changedVideo : 'changedVideo',
-    takeFriendVideoChange : 'takeFriendVideoChange',
-
-    acknowledge : "acknowledge"
-};
 
 var app = express();
-var port = 3700;
 configureWebServer(app);
 
-var server = app.listen(port);
-
+var server = app.listen(Constants.SERVER_PORT);
 var io = require('socket.io').listen(server);
 setupCommunications();
 
@@ -55,6 +30,17 @@ function configureWebServer(appObj) {
     //appObj.use('/logs', scribe.webPanel());
 }
 
+
+// Will contain objects, with a userEmail value pointing at an object
+// The object will have keys: 'socketId', 'googleUserId', 'friendsList', 'myRoom'
+var connectedUsers = {};
+
+var clientActionSelector = {
+    'sociallyIdentifyYourself' : sociallyIdentifyYourself,
+    'userChangedOnlineStatus' : userChangedOnlineStatus,
+    'changedVideo' : changedVideo
+};
+
 function setupCommunications() {
     io.sockets.on('connection', function (socket) {
         console.time().info("\nGot a socket.io connection!");
@@ -62,7 +48,7 @@ function setupCommunications() {
         socket.on('send', function (data) {
             var clientAction = data.action;
             var reaction = clientActionSelector[clientAction];
-            reaction(socket, data); // For every action demands a reaction!
+            reaction(socket, data); // Every action demands an equal and opposite reaction!
         });
         socket.on('disconnect', function() {
             var disconnectedUserEmail = socket.userEmail;
@@ -72,12 +58,6 @@ function setupCommunications() {
     });
     console.time().info("\nServer initialization done. Ready to receive requests.");
 }
-
-var clientActionSelector = {
-    'sociallyIdentifyYourself' : sociallyIdentifyYourself,
-    'userChangedOnlineStatus' : userChangedOnlineStatus,
-    'changedVideo' : changedVideo
-};
 
 //-- Core client actions
 function sociallyIdentifyYourself(socketToAClient, messageData) {
@@ -111,19 +91,40 @@ function sociallyIdentifyYourself(socketToAClient, messageData) {
 }
 
 function userChangedOnlineStatus (socketToAClient, messageData) {
-    console.time().info("\nIn userChangedOnlineStatus! Got online status change: \n" + JSON.stringify(messageData));
+    //console.time().info("\nIn userChangedOnlineStatus! Got online status change: \n" + JSON.stringify(messageData));
     var userEmailCausingAction = messageData.userEmail;
     var newUserOnlineState = messageData.onlineState;
+    var roomToBroadcastTo = '';
+    var googleUserIdOfCurrentUser = '';
+
+    if(newUserOnlineState) {
+        var currentUser = connectedUsers[userEmailCausingAction];
+
+        sociallyIdentifyYourself(socketToAClient, messageData);
+        if(currentUser) {
+            googleUserIdOfCurrentUser = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+            roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
+            console.time().info("Room to broadcast to: " + roomToBroadcastTo);
+        }
+    } else {
+        var currentUser = connectedUsers[userEmailCausingAction];
+        if (currentUser) {
+            googleUserIdOfCurrentUser = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+            delete connectedUsers[userEmailCausingAction];
+
+            roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
+            console.time().info("Room to broadcast to: " + roomToBroadcastTo);
+        } else {
+            console.log("currentUser NOT in connectedUsers ... ");
+        }
+    }
 
     var dataToBroadcast = {};
-    dataToBroadcast.action = PossibleActions.takeFriendOnlineStatus;
+    dataToBroadcast.action = Constants.PossibleActions.takeFriendOnlineStatus;
     dataToBroadcast.userEmail = userEmailCausingAction;
+    dataToBroadcast[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserIdOfCurrentUser;
     dataToBroadcast.onlineState = newUserOnlineState;
 
-    var currentUserConnectionData = connectedUsers[userEmailCausingAction];
-    //io.sockets.in(currentUserConnectionData[CONN_DATA_KEYS.MY_ROOM]).emit("message", dataToBroadcast);
-    var roomToBroadcastTo = currentUserConnectionData[CONN_DATA_KEYS.MY_ROOM];
-    console.time().info("Room to broadcast to: " + roomToBroadcastTo);
     socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
 }
 
@@ -137,16 +138,24 @@ function changedVideo (socketToAClient, messageData) {
         console.time().info("Cool! Got video details");
         var videoDetails = JSON.parse(response);
 
-        var dataToBroadcast = {};
-        dataToBroadcast.action = PossibleActions.takeFriendVideoChange;
-        dataToBroadcast.video = {};
-        dataToBroadcast.video.title = videoDetails.title;
-        dataToBroadcast.video.videoUrl = videoUrl;
-        dataToBroadcast.video.thumbnail_url = videoDetails.thumbnail_url;
-        dataToBroadcast.video.userEmail = userEmail;
+        var currentUser = connectedUsers[userEmail];
+        currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
+        currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
+        currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
 
-        var currentUserConnectionData = connectedUsers[userEmail];
-        var roomToBroadcastTo = currentUserConnectionData[CONN_DATA_KEYS.MY_ROOM];
+        connectedUsers[userEmail] = currentUser;
+        //--
+        var dataToBroadcast = {};
+        dataToBroadcast.action = Constants.PossibleActions.takeFriendVideoChange;
+        var friendChangedVideo = {};
+        friendChangedVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUserConnectionData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+        friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
+        friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
+        friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
+        friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
+        dataToBroadcast.friendChangedVideo = friendChangedVideo;
+
+        var roomToBroadcastTo = currentUserConnectionData[Constants.CONN_DATA_KEYS.MY_ROOM];
         console.time().info("Room to broadcast to: " + roomToBroadcastTo);
         socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
     });
@@ -165,55 +174,55 @@ function takeVideosBeingWatched(theSocket, userEmail, googleUserId, friendsList)
     theSocket['userEmail'] = userEmail;
 
     var connectedUserObj = {};
-    connectedUserObj[CONN_DATA_KEYS.SOCKET_ID] = theSocket.id;
-    connectedUserObj[CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
-    connectedUserObj[CONN_DATA_KEYS.FRIENDS_LIST] = friendsList;
-    connectedUserObj[CONN_DATA_KEYS.MY_ROOM] = "room_" + googleUserId;
+    connectedUserObj[Constants.CONN_DATA_KEYS.SOCKET_ID] = theSocket.id;
+    connectedUserObj[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
+    connectedUserObj[Constants.CONN_DATA_KEYS.FRIENDS_LIST] = friendsList;
+    connectedUserObj[Constants.CONN_DATA_KEYS.MY_ROOM] = "room_" + googleUserId;
+
+    connectedUserObj[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
+        videoUrl : '',
+        title    : '',
+        thumbnail_url : ''
+    };
 
     connectedUsers[userEmail] = connectedUserObj;
-    var friendsDataOnline = addSocketToRooms(theSocket, userEmail);
+    var friendsOnYoutube = addSocketToRooms(theSocket, userEmail);
 
     var dataToReplyWith = {};
-    dataToReplyWith.action = PossibleActions.takeVideosBeingWatched;
-    dataToReplyWith.videos = friendsDataOnline;
+    dataToReplyWith.action = Constants.PossibleActions.takeVideosBeingWatched;
+    dataToReplyWith.friendsOnYoutube = friendsOnYoutube;
 
     theSocket.emit('message', dataToReplyWith);
     //console.time().info("Just sent: " + JSON.stringify(dataToReplyWith) + " to client\n");
 }
 
 function addSocketToRooms(currentUserSocket, userEmail) {
-    console.time().info("Inside addSocketToRooms ...");
-    userEmail += ''; // VERY IMPORTANT! FOR EQUALITY CHECK BELOW
     var friendsWhoAreWatchingStuff = [];
-
     var currentUserConnectionData = connectedUsers[userEmail];
-    var myFriendsList = currentUserConnectionData[CONN_DATA_KEYS.FRIENDS_LIST];
+    var myFriendsList = currentUserConnectionData[Constants.CONN_DATA_KEYS.FRIENDS_LIST];
 
     for (var aPossibleFriendUserEmail in connectedUsers) {
         if(connectedUsers.hasOwnProperty(aPossibleFriendUserEmail)) {
-            aPossibleFriendUserEmail += ''; // VERY IMPORTANT! FOR EQUALITY CHECK BELOW
             if (aPossibleFriendUserEmail !== userEmail) { //To skip myself
                 var possibleFriendConnectedData = connectedUsers[aPossibleFriendUserEmail];
-                var possibleFriendGoogleId = possibleFriendConnectedData[CONN_DATA_KEYS.GOOGLE_USER_ID];
-                console.time().info("possibleFriendGoogleId: " + possibleFriendGoogleId);
+                var possibleFriendGoogleId = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
 
                 if(Utils.isMyGoogleFriend(myFriendsList, possibleFriendGoogleId)) {
-                    console.time().info("Found a google friend online! google user id: " + possibleFriendGoogleId);
-                    friendsWhoAreWatchingStuff.push(possibleFriendConnectedData);
+                    var friendChangedVideo = {};
+                    friendChangedVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+                    friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
+                    friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl;
+                    friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title;
+                    friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url;
+                    friendsWhoAreWatchingStuff.push(friendChangedVideo);
 
-                    var friendSocket = io.sockets.connected[possibleFriendConnectedData[CONN_DATA_KEYS.SOCKET_ID]];
+                    var friendSocket = io.sockets.connected[possibleFriendConnectedData[Constants.CONN_DATA_KEYS.SOCKET_ID]];
                     if(friendSocket) {
-                        console.log("Found socket for friend");
-
-                        var myRoom = currentUserConnectionData[CONN_DATA_KEYS.MY_ROOM];
-                        console.time().info("myRoom: " + myRoom);
+                        var myRoom = currentUserConnectionData[Constants.CONN_DATA_KEYS.MY_ROOM];
                         friendSocket.join(myRoom);
-                        console.time().info("Added my friend's socket to my room.");
 
-                        var myFriendsRoom = possibleFriendConnectedData[CONN_DATA_KEYS.MY_ROOM];
-                        console.time().info("myFriendsRoom: " + myFriendsRoom);
+                        var myFriendsRoom = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.MY_ROOM];
                         currentUserSocket.join(myFriendsRoom);
-                        console.time().info("Added my socket to friend's room.");
                     }
                 }
             }
