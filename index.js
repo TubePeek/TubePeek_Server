@@ -156,7 +156,7 @@ function changedVideo (socketToAClient, messageData) {
             friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
             dataToBroadcast.friendChangedVideo = friendChangedVideo;
 
-            var roomToBroadcastTo = currentUserConnectionData[Constants.CONN_DATA_KEYS.MY_ROOM];
+            var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             console.time().info("Room to broadcast to: " + roomToBroadcastTo);
             socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
         } else {
