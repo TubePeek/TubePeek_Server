@@ -148,7 +148,7 @@ function changedVideo (socketToAClient, messageData) {
         var dataToBroadcast = {};
         dataToBroadcast.action = Constants.PossibleActions.takeFriendVideoChange;
         var friendChangedVideo = {};
-        friendChangedVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUserConnectionData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+        friendChangedVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
         friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
         friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
         friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
