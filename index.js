@@ -62,7 +62,7 @@ function setupCommunications() {
                 dataToBroadcast.onlineState = false;
 
                 var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
-                socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
+                socket.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
                 delete connectedUsers[disconnectedUserEmail];
                 console.time().info("\nDisconnected UserEmail: " + disconnectedUserEmail);
             }
