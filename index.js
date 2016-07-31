@@ -52,8 +52,20 @@ function setupCommunications() {
         });
         socket.on('disconnect', function() {
             var disconnectedUserEmail = socket.userEmail;
-            console.time().info("\nDisconnected UserEmail: " + disconnectedUserEmail);
-            delete connectedUsers[disconnectedUserEmail];
+            var currentUser = connectedUsers[disconnectedUserEmail];
+
+            if(currentUser) {
+                var dataToBroadcast = {};
+                dataToBroadcast.action = Constants.PossibleActions.takeFriendOnlineStatus;
+                dataToBroadcast.userEmail = disconnectedUserEmail;
+                dataToBroadcast[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+                dataToBroadcast.onlineState = false;
+
+                var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
+                socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
+                delete connectedUsers[disconnectedUserEmail];
+                console.time().info("\nDisconnected UserEmail: " + disconnectedUserEmail);
+            }
         });
     });
     console.time().info("\nServer initialization done. Ready to receive requests.");
