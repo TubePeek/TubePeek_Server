@@ -6,7 +6,8 @@ constants.CONN_DATA_KEYS = {
     SOCKET_ID : 'socketId',
     GOOGLE_USER_ID : 'googleUserId',
     FRIENDS_LIST : 'friendsList',
-    MY_ROOM: 'myRoom'
+    MY_ROOM: 'myRoom',
+    CURRENT_VIDEO: 'videoData'
 };
 
 constants.PossibleActions = {
