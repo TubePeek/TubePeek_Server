@@ -91,7 +91,7 @@ function sociallyIdentifyYourself(socketToAClient, messageData) {
 }
 
 function userChangedOnlineStatus (socketToAClient, messageData) {
-    console.time().info("\nIn userChangedOnlineStatus! Got online status change: \n" + JSON.stringify(messageData));
+    //console.time().info("\nIn userChangedOnlineStatus! Got online status change: \n" + JSON.stringify(messageData));
     var userEmailCausingAction = messageData.userEmail;
     var newUserOnlineState = messageData.onlineState;
     var roomToBroadcastTo = '';
