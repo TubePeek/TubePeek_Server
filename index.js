@@ -52,8 +52,20 @@ function setupCommunications() {
         });
         socket.on('disconnect', function() {
             var disconnectedUserEmail = socket.userEmail;
-            console.time().info("\nDisconnected UserEmail: " + disconnectedUserEmail);
-            delete connectedUsers[disconnectedUserEmail];
+            var currentUser = connectedUsers[disconnectedUserEmail];
+
+            if(currentUser) {
+                var dataToBroadcast = {};
+                dataToBroadcast.action = Constants.PossibleActions.takeFriendOnlineStatus;
+                dataToBroadcast.userEmail = disconnectedUserEmail;
+                dataToBroadcast[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+                dataToBroadcast.onlineState = false;
+
+                var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
+                socket.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
+                delete connectedUsers[disconnectedUserEmail];
+                console.time().info("\nDisconnected UserEmail: " + disconnectedUserEmail);
+            }
         });
     });
     console.time().info("\nServer initialization done. Ready to receive requests.");
@@ -139,25 +151,29 @@ function changedVideo (socketToAClient, messageData) {
         var videoDetails = JSON.parse(response);
 
         var currentUser = connectedUsers[userEmail];
-        currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
-        currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
-        currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
+        if(currentUser) {
+            currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
+            currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
+            currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
 
-        connectedUsers[userEmail] = currentUser;
-        //--
-        var dataToBroadcast = {};
-        dataToBroadcast.action = Constants.PossibleActions.takeFriendVideoChange;
-        var friendChangedVideo = {};
-        friendChangedVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUserConnectionData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
-        friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
-        friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
-        friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
-        friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
-        dataToBroadcast.friendChangedVideo = friendChangedVideo;
+            connectedUsers[userEmail] = currentUser;
+            //--
+            var dataToBroadcast = {};
+            dataToBroadcast.action = Constants.PossibleActions.takeFriendVideoChange;
+            var friendChangedVideo = {};
+            friendChangedVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+            friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
+            friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
+            friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
+            friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
+            dataToBroadcast.friendChangedVideo = friendChangedVideo;
 
-        var roomToBroadcastTo = currentUserConnectionData[Constants.CONN_DATA_KEYS.MY_ROOM];
-        console.time().info("Room to broadcast to: " + roomToBroadcastTo);
-        socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
+            var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
+            console.time().info("Room to broadcast to: " + roomToBroadcastTo);
+            socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
+        } else {
+            console.time().info("currentUser for : " + userEmail + " is NULL.");
+        }
     });
 }
 //- End of core client actions
