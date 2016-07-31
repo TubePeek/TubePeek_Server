@@ -95,18 +95,21 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
     var userEmailCausingAction = messageData.userEmail;
     var newUserOnlineState = messageData.onlineState;
     var roomToBroadcastTo = '';
+    var googleUserIdOfCurrentUser = '';
 
     if(newUserOnlineState) {
         var currentUser = connectedUsers[userEmailCausingAction];
 
         sociallyIdentifyYourself(socketToAClient, messageData);
         if(currentUser) {
+            googleUserIdOfCurrentUser = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
             roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             console.time().info("Room to broadcast to: " + roomToBroadcastTo);
         }
     } else {
         var currentUser = connectedUsers[userEmailCausingAction];
         if (currentUser) {
+            googleUserIdOfCurrentUser = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
             delete connectedUsers[userEmailCausingAction];
 
             roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
@@ -119,6 +122,7 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
     var dataToBroadcast = {};
     dataToBroadcast.action = Constants.PossibleActions.takeFriendOnlineStatus;
     dataToBroadcast.userEmail = userEmailCausingAction;
+    dataToBroadcast[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserIdOfCurrentUser;
     dataToBroadcast.onlineState = newUserOnlineState;
 
     socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
@@ -193,15 +197,12 @@ function takeVideosBeingWatched(theSocket, userEmail, googleUserId, friendsList)
 }
 
 function addSocketToRooms(currentUserSocket, userEmail) {
-    console.time().info("Inside addSocketToRooms ...");
-    //userEmail += ''; // VERY IMPORTANT! FOR EQUALITY CHECK BELOW
     var friendsWhoAreWatchingStuff = [];
     var currentUserConnectionData = connectedUsers[userEmail];
     var myFriendsList = currentUserConnectionData[Constants.CONN_DATA_KEYS.FRIENDS_LIST];
 
     for (var aPossibleFriendUserEmail in connectedUsers) {
         if(connectedUsers.hasOwnProperty(aPossibleFriendUserEmail)) {
-            //aPossibleFriendUserEmail += ''; // VERY IMPORTANT! FOR EQUALITY CHECK BELOW
             if (aPossibleFriendUserEmail !== userEmail) { //To skip myself
                 var possibleFriendConnectedData = connectedUsers[aPossibleFriendUserEmail];
                 var possibleFriendGoogleId = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
