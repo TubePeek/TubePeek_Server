@@ -2,8 +2,8 @@
 
 var express = require("express");
 var Hashids = require('hashids');
-var Users = require('./models/Users');
-var SocialIdentities = require('./models/SocialIdentities');
+var Users = require('./dbAccess/Users');
+var SocialIdentities = require('./dbAccess/SocialIdentities');
 var Constants = require('./Constants');
 var Utils = require('./Utils');
 

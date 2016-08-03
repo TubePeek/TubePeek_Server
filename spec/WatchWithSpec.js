@@ -1,5 +1,5 @@
-var Users = require('../models/Users');
-var Videos = require('../models/Videos');
+var Users = require('../dbAccess/Users');
+var Videos = require('../dbAccess/Videos');
 
 
 describe("Database tests", function() {
