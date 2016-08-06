@@ -83,7 +83,7 @@ function sociallyIdentifyYourself(socketToAClient, messageData) {
     var socialProvider = messageData.provider;
     var friendsList = messageData.friendsList;
 
-    Users.findBy('email_address', authData.emailAddress, function(usersFound){
+    Users.findByEmail(authData.emailAddress, function(usersFound) {
         if(usersFound && usersFound.length > 0) {
             var socialIdentitiesFinder = SocialIdentities.findByUIdAndProvider(authData.uid, socialProvider);
 
@@ -100,7 +100,7 @@ function sociallyIdentifyYourself(socketToAClient, messageData) {
                 }
             });
         } else {
-            Users.insert({'email_address': authData.emailAddress}, function(idOfNewUser) {
+            Users.insertEmail(authData.emailAddress, function(idOfNewUser) {
                 insertSocialIdentityThenIdentifyClient(socketToAClient, socialProvider, authData, idOfNewUser, friendsList);
             });
         }
