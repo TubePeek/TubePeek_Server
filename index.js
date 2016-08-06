@@ -61,7 +61,13 @@ function setupCommunications() {
         socket.on('send', function (data) {
             var clientAction = data.action;
             var reaction = clientActionSelector[clientAction];
-            reaction(socket, data); // Every action demands an equal and opposite reaction!
+            if(typeof reaction == 'function')
+                reaction(socket, data); // Every action demands an equal and opposite reaction!
+            else {
+                console.time().info("Oops! Can't find reaction function!");
+                console.time().info("Can't react to client action: " + clientAction);
+                console.time().info("Now, panic.");
+            }
         });
         socket.on('disconnect', function() {
             var disconnectedUserEmail = socket.userEmail;
