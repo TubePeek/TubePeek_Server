@@ -2,8 +2,9 @@
 
 var express = require("express");
 var Hashids = require('hashids');
-var Users = require('./models/Users');
-var SocialIdentities = require('./models/SocialIdentities');
+
+var Users = require('./dbAccess/Users');
+var SocialIdentities = require('./dbAccess/SocialIdentities');
 var Constants = require('./Constants');
 var Utils = require('./Utils');
 
@@ -27,13 +28,25 @@ function configureWebServer(appObj) {
         res.render("page");
     });
     appObj.use(express.static(__dirname + '/public'));
-    //appObj.use('/logs', scribe.webPanel());
+
+    var dbEnvVariable = 'WatchWith_DbEnv';
+    if (process.env[dbEnvVariable] !== undefined) {
+        var dbEnv = process.env[dbEnvVariable];
+
+        console.log("[configureWebServer] WatchWith_DbEnv: " + dbEnv);
+        if (dbEnv === 'development') {
+            appObj.use('/logs', scribe.webPanel());
+        }
+    }
 }
 
 
 // Will contain objects, with a userEmail value pointing at an object
-// The object will have keys: 'socketId', 'googleUserId', 'friendsList', 'myRoom'
+// The object will have keys: 'socketId', 'googleUserId', myRoom', 'videoData'
 var connectedUsers = {};
+
+//{{userEmail}} -> [{{actualFriendsList}}]
+var _friendsMegaList = {};
 
 var clientActionSelector = {
     'sociallyIdentifyYourself' : sociallyIdentifyYourself,
@@ -64,6 +77,7 @@ function setupCommunications() {
                 var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
                 socket.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
                 delete connectedUsers[disconnectedUserEmail];
+                delete _friendsMegaList[disconnectedUserEmail];
                 console.time().info("\nDisconnected UserEmail: " + disconnectedUserEmail);
             }
         });
@@ -78,7 +92,7 @@ function sociallyIdentifyYourself(socketToAClient, messageData) {
     var socialProvider = messageData.provider;
     var friendsList = messageData.friendsList;
 
-    Users.findBy('email_address', authData.emailAddress, function(usersFound){
+    Users.findByEmail(authData.emailAddress, function(usersFound) {
         if(usersFound && usersFound.length > 0) {
             var socialIdentitiesFinder = SocialIdentities.findByUIdAndProvider(authData.uid, socialProvider);
 
@@ -95,7 +109,7 @@ function sociallyIdentifyYourself(socketToAClient, messageData) {
                 }
             });
         } else {
-            Users.insert({'email_address': authData.emailAddress}, function(idOfNewUser) {
+            Users.insertEmail(authData.emailAddress, function(idOfNewUser) {
                 insertSocialIdentityThenIdentifyClient(socketToAClient, socialProvider, authData, idOfNewUser, friendsList);
             });
         }
@@ -123,6 +137,7 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
         if (currentUser) {
             googleUserIdOfCurrentUser = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
             delete connectedUsers[userEmailCausingAction];
+            delete _friendsMegaList[userEmailCausingAction];
 
             roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             console.time().info("Room to broadcast to: " + roomToBroadcastTo);
@@ -192,7 +207,6 @@ function takeVideosBeingWatched(theSocket, userEmail, googleUserId, friendsList)
     var connectedUserObj = {};
     connectedUserObj[Constants.CONN_DATA_KEYS.SOCKET_ID] = theSocket.id;
     connectedUserObj[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
-    connectedUserObj[Constants.CONN_DATA_KEYS.FRIENDS_LIST] = friendsList;
     connectedUserObj[Constants.CONN_DATA_KEYS.MY_ROOM] = "room_" + googleUserId;
 
     connectedUserObj[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
@@ -202,6 +216,7 @@ function takeVideosBeingWatched(theSocket, userEmail, googleUserId, friendsList)
     };
 
     connectedUsers[userEmail] = connectedUserObj;
+    _friendsMegaList[userEmail] = friendsList;
     var friendsOnYoutube = addSocketToRooms(theSocket, userEmail);
 
     var dataToReplyWith = {};
@@ -215,7 +230,7 @@ function takeVideosBeingWatched(theSocket, userEmail, googleUserId, friendsList)
 function addSocketToRooms(currentUserSocket, userEmail) {
     var friendsWhoAreWatchingStuff = [];
     var currentUserConnectionData = connectedUsers[userEmail];
-    var myFriendsList = currentUserConnectionData[Constants.CONN_DATA_KEYS.FRIENDS_LIST];
+    var myFriendsList = _friendsMegaList[userEmail];
 
     for (var aPossibleFriendUserEmail in connectedUsers) {
         if(connectedUsers.hasOwnProperty(aPossibleFriendUserEmail)) {
