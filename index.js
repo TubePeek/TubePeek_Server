@@ -28,7 +28,16 @@ function configureWebServer(appObj) {
         res.render("page");
     });
     appObj.use(express.static(__dirname + '/public'));
-    //appObj.use('/logs', scribe.webPanel());
+
+    var dbEnvVariable = 'WatchWith_DbEnv';
+    if (process.env[dbEnvVariable] !== undefined) {
+        var dbEnv = process.env[dbEnvVariable];
+
+        console.log("[configureWebServer] WatchWith_DbEnv: " + dbEnv);
+        if (dbEnv === 'development') {
+            appObj.use('/logs', scribe.webPanel());
+        }
+    }
 }
 
 
