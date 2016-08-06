@@ -2,6 +2,7 @@
 
 var express = require("express");
 var Hashids = require('hashids');
+
 var Users = require('./dbAccess/Users');
 var SocialIdentities = require('./dbAccess/SocialIdentities');
 var Constants = require('./Constants');
@@ -32,8 +33,11 @@ function configureWebServer(appObj) {
 
 
 // Will contain objects, with a userEmail value pointing at an object
-// The object will have keys: 'socketId', 'googleUserId', 'friendsList', 'myRoom'
+// The object will have keys: 'socketId', 'googleUserId', myRoom', 'videoData'
 var connectedUsers = {};
+
+//{{userEmail}} -> [{{actualFriendsList}}]
+var _friendsMegaList = {};
 
 var clientActionSelector = {
     'sociallyIdentifyYourself' : sociallyIdentifyYourself,
@@ -64,6 +68,7 @@ function setupCommunications() {
                 var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
                 socket.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
                 delete connectedUsers[disconnectedUserEmail];
+                delete _friendsMegaList[disconnectedUserEmail];
                 console.time().info("\nDisconnected UserEmail: " + disconnectedUserEmail);
             }
         });
@@ -123,6 +128,7 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
         if (currentUser) {
             googleUserIdOfCurrentUser = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
             delete connectedUsers[userEmailCausingAction];
+            delete _friendsMegaList[userEmailCausingAction];
 
             roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             console.time().info("Room to broadcast to: " + roomToBroadcastTo);
@@ -215,7 +221,7 @@ function takeVideosBeingWatched(theSocket, userEmail, googleUserId, friendsList)
 function addSocketToRooms(currentUserSocket, userEmail) {
     var friendsWhoAreWatchingStuff = [];
     var currentUserConnectionData = connectedUsers[userEmail];
-    var myFriendsList = currentUserConnectionData[Constants.CONN_DATA_KEYS.FRIENDS_LIST];
+    var myFriendsList = _friendsMegaList[userEmail];
 
     for (var aPossibleFriendUserEmail in connectedUsers) {
         if(connectedUsers.hasOwnProperty(aPossibleFriendUserEmail)) {
