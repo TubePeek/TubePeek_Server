@@ -2,9 +2,7 @@ var knexDbConfigs = require('./knexfile.js');
 
 var dbEnvVariable = 'WatchWith_DbEnv';
 
-if (process.env[dbEnvVariable] === undefined) {
-    throw new Error('Environment variable for: ' + dbEnvVariable + ' must exist!');
-} else {
+if (process.env[dbEnvVariable] !== undefined) {
     var dbEnv = process.env[dbEnvVariable];
     console.log("WatchWith_DbEnv: " + dbEnv);
 
@@ -13,4 +11,6 @@ if (process.env[dbEnvVariable] === undefined) {
 
     module.exports = watchWithDb;
     watchWithDb.migrate.latest([currentDbConfig]);
+} else {
+    throw new Error('Environment variable for: ' + dbEnvVariable + ' must exist!');
 }
