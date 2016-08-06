@@ -8,7 +8,7 @@ var SocialIdentities = require('./dbAccess/SocialIdentities');
 var Constants = require('./Constants');
 var Utils = require('./Utils');
 
-var scribe = require('scribe-js')();                       // Use this import if you want to configure or custom something.
+var scribe = require('scribe-js')();    // if you need to customize something on scribe.
 var console = process.console;
 
 
@@ -96,7 +96,7 @@ function sociallyIdentifyYourself(socketToAClient, messageData) {
         if(usersFound && usersFound.length > 0) {
             var socialIdentitiesFinder = SocialIdentities.findByUIdAndProvider(authData.uid, socialProvider);
 
-            socialIdentitiesFinder.then(function(identitiesFound) {
+            var onIdentitiesFound = function(identitiesFound) {
                 if(identitiesFound.length > 0) {
                     identitiesFound.some(function(anIdentity) {
                         if(anIdentity.provider === socialProvider) {
@@ -107,7 +107,8 @@ function sociallyIdentifyYourself(socketToAClient, messageData) {
                 } else {
                     insertSocialIdentityThenIdentifyClient(socketToAClient, socialProvider, authData, usersFound[0]['id'], friendsList);
                 }
-            });
+            }
+            socialIdentitiesFinder.then(onIdentitiesFound);
         } else {
             Users.insertEmail(authData.emailAddress, function(idOfNewUser) {
                 insertSocialIdentityThenIdentifyClient(socketToAClient, socialProvider, authData, idOfNewUser, friendsList);
@@ -117,22 +118,22 @@ function sociallyIdentifyYourself(socketToAClient, messageData) {
 }
 
 function userChangedOnlineStatus (socketToAClient, messageData) {
-    //console.time().info("\nIn userChangedOnlineStatus! Got online status change: \n" + JSON.stringify(messageData));
     var userEmailCausingAction = messageData.userEmail;
     var newUserOnlineState = messageData.onlineState;
     var roomToBroadcastTo = '';
     var googleUserIdOfCurrentUser = '';
 
     if(newUserOnlineState) {
-        var currentUser = connectedUsers[userEmailCausingAction];
-
         sociallyIdentifyYourself(socketToAClient, messageData);
+
+        var currentUser = connectedUsers[userEmailCausingAction];
         if(currentUser) {
             googleUserIdOfCurrentUser = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
             roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             console.time().info("Room to broadcast to: " + roomToBroadcastTo);
         }
     } else {
+        console.log("[userChangedOnlineStatus] ... \n" + JSON.stringify(messageData));
         var currentUser = connectedUsers[userEmailCausingAction];
         if (currentUser) {
             googleUserIdOfCurrentUser = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
@@ -162,7 +163,7 @@ function changedVideo (socketToAClient, messageData) {
 
     var pathParam = '/oembed?url=' + messageData.videoUrl + '&format=json';
     Utils.doGet('www.youtube.com', pathParam, function(response) {
-        console.time().info("Cool! Got video details");
+        console.time().info("\n\nCool! Got youtube video details:\n" + response + "\n\n");
         var videoDetails = JSON.parse(response);
 
         var currentUser = connectedUsers[userEmail];
@@ -175,13 +176,13 @@ function changedVideo (socketToAClient, messageData) {
             //--
             var dataToBroadcast = {};
             dataToBroadcast.action = Constants.PossibleActions.takeFriendVideoChange;
-            var friendChangedVideo = {};
-            friendChangedVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
-            friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
-            friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
-            friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
-            friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
-            dataToBroadcast.friendChangedVideo = friendChangedVideo;
+            var friendVidChange = {};
+            friendVidChange[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
+            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
+            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
+            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
+            dataToBroadcast.friendChangedVideo = friendVidChange;
 
             var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             console.time().info("Room to broadcast to: " + roomToBroadcastTo);
@@ -201,11 +202,11 @@ function insertSocialIdentityThenIdentifyClient(socketToSendUserIdTo, socialProv
     });
 }
 
-function takeVideosBeingWatched(theSocket, userEmail, googleUserId, friendsList) {
-    theSocket['userEmail'] = userEmail;
+function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, friendsList) {
+    currentUserSocket['userEmail'] = userEmail;
 
     var connectedUserObj = {};
-    connectedUserObj[Constants.CONN_DATA_KEYS.SOCKET_ID] = theSocket.id;
+    connectedUserObj[Constants.CONN_DATA_KEYS.SOCKET_ID] = currentUserSocket.id;
     connectedUserObj[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
     connectedUserObj[Constants.CONN_DATA_KEYS.MY_ROOM] = "room_" + googleUserId;
 
@@ -217,47 +218,47 @@ function takeVideosBeingWatched(theSocket, userEmail, googleUserId, friendsList)
 
     connectedUsers[userEmail] = connectedUserObj;
     _friendsMegaList[userEmail] = friendsList;
-    var friendsOnYoutube = addSocketToRooms(theSocket, userEmail);
+    var friendsOnYoutube = addSocketToRooms(currentUserSocket, userEmail);
 
     var dataToReplyWith = {};
     dataToReplyWith.action = Constants.PossibleActions.takeVideosBeingWatched;
     dataToReplyWith.friendsOnYoutube = friendsOnYoutube;
 
-    theSocket.emit('message', dataToReplyWith);
+    currentUserSocket.emit('message', dataToReplyWith);
     //console.time().info("Just sent: " + JSON.stringify(dataToReplyWith) + " to client\n");
 }
 
 function addSocketToRooms(currentUserSocket, userEmail) {
-    var friendsWhoAreWatchingStuff = [];
-    var currentUserConnectionData = connectedUsers[userEmail];
+    var friendsOnYoutube = [];
+    var currentUserConnData = connectedUsers[userEmail];
     var myFriendsList = _friendsMegaList[userEmail];
 
     for (var aPossibleFriendUserEmail in connectedUsers) {
         if(connectedUsers.hasOwnProperty(aPossibleFriendUserEmail)) {
             if (aPossibleFriendUserEmail !== userEmail) { //To skip myself
-                var possibleFriendConnectedData = connectedUsers[aPossibleFriendUserEmail];
-                var possibleFriendGoogleId = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+                var possibleFriendConnData = connectedUsers[aPossibleFriendUserEmail];
+                var possibleFriendGoogleId = possibleFriendConnData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
 
                 if(Utils.isMyGoogleFriend(myFriendsList, possibleFriendGoogleId)) {
-                    var friendChangedVideo = {};
-                    friendChangedVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
-                    friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
-                    friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl;
-                    friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title;
-                    friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url;
-                    friendsWhoAreWatchingStuff.push(friendChangedVideo);
+                    var friendVidChange = {};
+                    friendVidChange[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = possibleFriendConnData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+                    friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
+                    friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = possibleFriendConnData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl;
+                    friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = possibleFriendConnData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title;
+                    friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = possibleFriendConnData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url;
+                    friendsOnYoutube.push(friendVidChange);
 
-                    var friendSocket = io.sockets.connected[possibleFriendConnectedData[Constants.CONN_DATA_KEYS.SOCKET_ID]];
+                    var friendSocket = io.sockets.connected[possibleFriendConnData[Constants.CONN_DATA_KEYS.SOCKET_ID]];
                     if(friendSocket) {
-                        var myRoom = currentUserConnectionData[Constants.CONN_DATA_KEYS.MY_ROOM];
+                        var myRoom = currentUserConnData[Constants.CONN_DATA_KEYS.MY_ROOM];
                         friendSocket.join(myRoom);
 
-                        var myFriendsRoom = possibleFriendConnectedData[Constants.CONN_DATA_KEYS.MY_ROOM];
+                        var myFriendsRoom = possibleFriendConnData[Constants.CONN_DATA_KEYS.MY_ROOM];
                         currentUserSocket.join(myFriendsRoom);
                     }
                 }
             }
         }
     }
-    return friendsWhoAreWatchingStuff;
+    return friendsOnYoutube;
 }
