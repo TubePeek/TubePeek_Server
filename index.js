@@ -198,7 +198,6 @@ function takeVideosBeingWatched(theSocket, userEmail, googleUserId, friendsList)
     var connectedUserObj = {};
     connectedUserObj[Constants.CONN_DATA_KEYS.SOCKET_ID] = theSocket.id;
     connectedUserObj[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
-    connectedUserObj[Constants.CONN_DATA_KEYS.FRIENDS_LIST] = friendsList;
     connectedUserObj[Constants.CONN_DATA_KEYS.MY_ROOM] = "room_" + googleUserId;
 
     connectedUserObj[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
@@ -208,6 +207,7 @@ function takeVideosBeingWatched(theSocket, userEmail, googleUserId, friendsList)
     };
 
     connectedUsers[userEmail] = connectedUserObj;
+    _friendsMegaList[userEmail] = friendsList;
     var friendsOnYoutube = addSocketToRooms(theSocket, userEmail);
 
     var dataToReplyWith = {};
