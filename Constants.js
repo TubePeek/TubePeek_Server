@@ -5,10 +5,10 @@ var constants = {};
 constants.CONN_DATA_KEYS = {
     SOCKET_ID : 'socketId',
     GOOGLE_USER_ID : 'googleUserId',
-    FRIENDS_LIST : 'friendsList',
     MY_ROOM: 'myRoom',
     CURRENT_VIDEO: 'videoData'
 };
+
 
 constants.PossibleActions = {
     sociallyIdentifyYourself : 'sociallyIdentifyYourself',   // The client first sends this to the server

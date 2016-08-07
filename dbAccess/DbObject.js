@@ -24,8 +24,8 @@ DbObject.findBy = function(columnName, columnVal, callbackOnResult) {
 //from DbObject then override the insert function
 DbObject.insert = function(insertData, callbackOnInsertDone) {
     dbAccess(this.tableName).insert(insertData).then(function() {
-         callbackOnInsertDone();
-     });
+        callbackOnInsertDone();
+    });
 }
 
 DbObject.deleteBy = function(columnName, columnVal, callbackOnDeleteDone) {
