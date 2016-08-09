@@ -20,14 +20,24 @@ var io = require('socket.io').listen(server);
 setupCommunications();
 
 function configureWebServer(appObj) {
-    appObj.set('views', __dirname + '/tpl');
-    appObj.set('view engine', "jade");
-    appObj.engine('jade', require('jade').__express);
+    //appObj.set('views', __dirname + '/tpl');
+    //appObj.set('view engine', "jade");
+    //appObj.engine('jade', require('jade').__express);
 
-    appObj.get("/", function(req, res){
-        res.render("page");
+    //appObj.set('views', __dirname + '/public');
+    //app.set('view engine', 'ejs');
+    app.set("view options", {layout: false});
+    app.use(express.static(__dirname + '/public'));
+
+    app.get('/', function(req, res) {
+        res.render('index.html');
     });
-    appObj.use(express.static(__dirname + '/public'));
+
+    // appObj.get("/", function(req, res){
+    //     //res.render("page");
+    //     res.render("index.html");
+    // });
+    //appObj.use(express.static(__dirname + '/public'));
 
     var dbEnvVariable = 'WatchWith_DbEnv';
     if (process.env[dbEnvVariable] !== undefined) {
