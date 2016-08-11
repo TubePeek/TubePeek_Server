@@ -11,6 +11,7 @@ constants.CONN_DATA_KEYS = {
 
 
 constants.PossibleActions = {
+    pleaseIdentifyYourself : 'pleaseIdentifyYourself',       // The server will send this to the client
     sociallyIdentifyYourself : 'sociallyIdentifyYourself',   // The client first sends this to the server
     takeVideosBeingWatched : 'takeVideosBeingWatched',       // The server then sends this to the client
 

@@ -68,6 +68,8 @@ function setupCommunications() {
     io.sockets.on('connection', function (socket) {
         console.time().info("\nGot a socket.io connection!");
 
+        sendRequestForIdentity(socket);
+
         socket.on('send', function (data) {
             var clientAction = data.action;
             var reaction = clientActionSelector[clientAction];
@@ -84,21 +86,33 @@ function setupCommunications() {
             var currentUser = connectedUsers[disconnectedUserEmail];
 
             if(currentUser) {
-                var dataToBroadcast = {};
-                dataToBroadcast.action = Constants.PossibleActions.takeFriendOnlineStatus;
-                dataToBroadcast.userEmail = disconnectedUserEmail;
-                dataToBroadcast[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
-                dataToBroadcast.onlineState = false;
-
-                var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
-                socket.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
-                delete connectedUsers[disconnectedUserEmail];
-                delete _friendsMegaList[disconnectedUserEmail];
-                console.time().info("\nDisconnected UserEmail: " + disconnectedUserEmail);
+                sendUserExitToFriends(socket, disconnectedUserEmail, currentUser);
             }
         });
     });
+
+    var sendUserExitToFriends = function (socket, disconnectedUserEmail, currentUser) {
+        console.time().info("Inside sendUserExitToFriends ... ");
+        var dataToBroadcast = {};
+        dataToBroadcast.action = Constants.PossibleActions.takeFriendOnlineStatus;
+        dataToBroadcast.userEmail = disconnectedUserEmail;
+        dataToBroadcast[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+        dataToBroadcast.onlineState = false;
+
+        var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
+        socket.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
+        delete connectedUsers[disconnectedUserEmail];
+        delete _friendsMegaList[disconnectedUserEmail];
+        console.time().info("\nDisconnected UserEmail: " + disconnectedUserEmail);
+    }
     console.time().info("\nServer initialization done. Ready to receive requests.");
+}
+
+function sendRequestForIdentity(socket) {
+    console.time().info("Inside sendRequestForIdentity");
+    var initialDataToSend = {};
+    initialDataToSend.action = Constants.PossibleActions.pleaseIdentifyYourself;
+    socket.emit('message', initialDataToSend);
 }
 
 //-- Core client actions
