@@ -131,6 +131,12 @@ function sociallyIdentifyYourself(socketToAClient, messageData) {
             });
         }
     });
+    var insertSocialIdentityThenIdentifyClient = function (socketToSendUserIdTo, socialProvider, authData, idOfUser, friendsList) {
+        SocialIdentities.insertSocialIdentify(socialProvider, authData, idOfUser, function() {
+            console.time().info("\nSocial identity inserted successfully.");
+            takeVideosBeingWatched(socketToSendUserIdTo, authData.emailAddress, authData.uid, friendsList);
+        });
+    };
 }
 
 function userChangedOnlineStatus (socketToAClient, messageData) {
@@ -209,14 +215,6 @@ function changedVideo (socketToAClient, messageData) {
     });
 }
 //- End of core client actions
-
-
-function insertSocialIdentityThenIdentifyClient(socketToSendUserIdTo, socialProvider, authData, idOfUser, friendsList) {
-    SocialIdentities.insertSocialIdentify(socialProvider, authData, idOfUser, function() {
-        console.time().info("\nSocial identity inserted successfully.");
-        takeVideosBeingWatched(socketToSendUserIdTo, authData.emailAddress, authData.uid, friendsList);
-    });
-}
 
 function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, friendsList) {
     currentUserSocket['userEmail'] = userEmail;
