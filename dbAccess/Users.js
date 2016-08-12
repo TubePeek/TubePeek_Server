@@ -19,8 +19,11 @@ usersTable.insert = function(insertData, callbackOnInsertDone) {
     });
 }
 
-usersTable.insertEmail = function(theEmail, callbackOnInsertDone) {
-    this.insert({'email_address': theEmail}, callbackOnInsertDone);
+usersTable.insertEmail = function(theEmail, createdAt, callbackOnInsertDone) {
+    this.insert({
+        'email_address': theEmail,
+        'created_at': createdAt
+    }, callbackOnInsertDone);
 }
 
 module.exports = usersTable;

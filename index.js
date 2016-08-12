@@ -13,6 +13,9 @@ var console = process.console;
 
 
 var app = express();
+
+var shouldAddDummyFriend = false;
+
 configureWebServer(app);
 
 var server = app.listen(Constants.SERVER_PORT);
@@ -24,20 +27,12 @@ function configureWebServer(appObj) {
     //appObj.set('view engine', "jade");
     //appObj.engine('jade', require('jade').__express);
 
-    //appObj.set('views', __dirname + '/public');
-    //app.set('view engine', 'ejs');
     app.set("view options", {layout: false});
     app.use(express.static(__dirname + '/public'));
 
     app.get('/', function(req, res) {
         res.render('index.html');
     });
-
-    // appObj.get("/", function(req, res){
-    //     //res.render("page");
-    //     res.render("index.html");
-    // });
-    //appObj.use(express.static(__dirname + '/public'));
 
     var dbEnvVariable = 'WatchWith_DbEnv';
     if (process.env[dbEnvVariable] !== undefined) {
@@ -46,6 +41,10 @@ function configureWebServer(appObj) {
         console.log("[configureWebServer] WatchWith_DbEnv: " + dbEnv);
         if (dbEnv === 'development') {
             appObj.use('/logs', scribe.webPanel());
+            shouldAddDummyFriend = true;
+            // app.get('/dummyUserAdmin', function(req, res) {
+            //     res.render('dummyUserAdmin.html');
+            // });
         }
     }
 }
@@ -59,26 +58,25 @@ var connectedUsers = {};
 var _friendsMegaList = {};
 
 var clientActionSelector = {
-    'sociallyIdentifyYourself' : sociallyIdentifyYourself,
+    'takeMySocialIdentity' : sociallyIdentifyYourself,
     'userChangedOnlineStatus' : userChangedOnlineStatus,
     'changedVideo' : changedVideo
 };
 
 function setupCommunications() {
     io.sockets.on('connection', function (socket) {
-        console.time().info("\nGot a socket.io connection!");
+        console.time().info("\nGot a client socket.io connection!");
 
         sendRequestForIdentity(socket);
 
         socket.on('send', function (data) {
             var clientAction = data.action;
-            var reaction = clientActionSelector[clientAction];
-            if(typeof reaction == 'function')
-                reaction(socket, data); // Every action demands an equal and opposite reaction!
+            var serverReaction = clientActionSelector[clientAction];
+            if(typeof serverReaction == 'function')
+                serverReaction(socket, data); // Every action demands an equal and opposite reaction!
             else {
                 console.time().info("Oops! Can't find reaction function!");
-                console.time().info("Can't react to client action: " + clientAction);
-                console.time().info("Now, panic.");
+                console.time().info("Can't react to client action: " + clientAction + ". Now panic");
             }
         });
         socket.on('disconnect', function() {
@@ -140,7 +138,8 @@ function sociallyIdentifyYourself(socketToAClient, messageData) {
             }
             socialIdentitiesFinder.then(onIdentitiesFound);
         } else {
-            Users.insertEmail(authData.emailAddress, function(idOfNewUser) {
+            var createdAt = Utils.dateFormat(new Date(), "%Y-%m-%d %H:%M:%S", true);
+            Users.insertEmail(authData.emailAddress, createdAt, function(idOfNewUser) {
                 insertSocialIdentityThenIdentifyClient(socketToAClient, socialProvider, authData, idOfNewUser, friendsList);
             });
         }
@@ -245,6 +244,9 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
     };
 
     connectedUsers[userEmail] = connectedUserObj;
+    if (shouldAddDummyFriend) {
+        friendsList.push(getWatchWithDummyUserToUserFriendsList());
+    }
     _friendsMegaList[userEmail] = friendsList;
     var friendsOnYoutube = addSocketToRooms(currentUserSocket, userEmail);
 
@@ -254,6 +256,48 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
 
     currentUserSocket.emit('message', dataToReplyWith);
     //console.time().info("Just sent: " + JSON.stringify(dataToReplyWith) + " to client\n");
+}
+
+function sendVideoChangeToSpecificUser(ytVideoUrl, userEmail) {
+    if (shouldAddDummyFriend) {
+        var userConnData = connectedUsers[userEmail];
+        if (userConnData) {
+            var userSocket = io.sockets.connected[userConnData[Constants.CONN_DATA_KEYS.SOCKET_ID]];
+            if (userSocket) {
+                var pathParam = '/oembed?url=' + ytVideoUrl + '&format=json';
+                Utils.doGet('www.youtube.com', pathParam, function(response) {
+                    if (response) {
+                        var videoDetails = JSON.parse(response);
+
+                        var dataToSend = {};
+                        dataToSend.action = Constants.PossibleActions.takeFriendVideoChange;
+                        var friendVidChange = {};
+                        friendVidChange[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = 'asdffdsa';
+                        friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
+                        friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = ytVideoUrl;
+                        friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
+                        friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
+                        dataToSend.friendChangedVideo = friendVidChange;
+
+                        userSocket.emit('message', dataToSend);
+                    }
+                });
+            }
+        }
+    }
+}
+
+function getWatchWithDummyUserToUserFriendsList () {
+    var dummyObjectFriendData = {
+        "displayName": Constants.AppName + "_DummyUser",
+        "etag":"\"xw0en60W6-NurXn4VBU-CMjSPEw/FK055O_WV2d36LkYqEc11YvRqUU\"",
+        "id":"asdffdsa",
+        "image":{"url":"https://lh4.googleusercontent.com/-ODjdRQ_Elgw/AAAAAAAAAAI/AAAAAAAAAIE/Lxsxh9IpCBY/photo.jpg?sz=50"},
+        "kind":"plus#person",
+        "objectType":"page",
+        "url":"https://plus.google.com/asdffdsa"
+    }
+    return dummyObjectFriendData;
 }
 
 function addSocketToRooms(currentUserSocket, userEmail) {
