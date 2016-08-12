@@ -138,7 +138,8 @@ function sociallyIdentifyYourself(socketToAClient, messageData) {
             }
             socialIdentitiesFinder.then(onIdentitiesFound);
         } else {
-            Users.insertEmail(authData.emailAddress, function(idOfNewUser) {
+            var createdAt = Utils.dateFormat(new Date(), "%Y-%m-%d %H:%M:%S", true);
+            Users.insertEmail(authData.emailAddress, createdAt, function(idOfNewUser) {
                 insertSocialIdentityThenIdentifyClient(socketToAClient, socialProvider, authData, idOfNewUser, friendsList);
             });
         }
