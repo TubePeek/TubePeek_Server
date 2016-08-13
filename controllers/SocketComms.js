@@ -175,7 +175,7 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
     dataToReplyWith.friendsOnYoutube = friendsOnYoutube;
 
     currentUserSocket.emit('message', dataToReplyWith);
-    broadcastOnlineStatus(socketToAClient, true, userEmail, googleUserId, "room_" + googleUserId);
+    broadcastOnlineStatus(currentUserSocket, true, userEmail, googleUserId, "room_" + googleUserId);
 }
 //--
 

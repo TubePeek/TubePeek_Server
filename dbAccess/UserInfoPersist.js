@@ -13,8 +13,8 @@ userInfoPersist.persist = function(authData, socialProvider, onPersistDoneFunc) 
                 if(identitiesFound.length > 0) {
                     identitiesFound.some(function(anIdentity) {
                         if(anIdentity.provider === socialProvider) {
-                            return true;
                             onPersistDoneFunc();
+                            return true;
                         }
                     });
                 } else {
