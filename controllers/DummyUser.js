@@ -1,5 +1,5 @@
 var Constants = require('../Constants');
-
+var Utils = require('../Utils');
 var shouldAddDummyFriend = false;
 
 // dummyUserEmail = 'dummyUser'
@@ -54,5 +54,29 @@ dummyUser.setNewVideoData = function(newVideoUrl, newVideoTitle, newVideoThumbna
         thumbnail_url : newVideoThumbnail
     }
 };
+
+dummyUser.sendDummyVidChangeToUser = function (ytVideoUrl, userSocket) {
+    var pathParam = '/oembed?url=' + ytVideoUrl + '&format=json';
+    var me = this;
+    Utils.doGet('www.youtube.com', pathParam, function(response) {
+        if (response) {
+            var videoDetails = JSON.parse(response);
+            var dataToSend = {};
+            dataToSend.action = Constants.PossibleActions.takeFriendVideoChange;
+
+            var friendVidChange = {};
+            friendVidChange[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = 'asdffdsa';
+            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
+                videoUrl : ytVideoUrl,
+                title : videoDetails.title,
+                thumbnail_url : videoDetails.thumbnail_url
+            };
+            me.setNewVideoData(ytVideoUrl, videoDetails.title, videoDetails.thumbnail_url);
+
+            dataToSend.friendChangedVideo = friendVidChange;
+            userSocket.emit('message', dataToSend);
+        }
+    });
+}
 
 module.exports = dummyUser;
