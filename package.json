@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "description": "Real time video watching with a friend",
   "dependencies": {
+    "body-parser": "^1.15.2",
     "ejs": "^2.5.1",
     "express": "latest",
     "hashids": "1.0.1",
