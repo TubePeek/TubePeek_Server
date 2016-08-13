@@ -5,6 +5,9 @@ var Hashids = require('hashids');
 
 var Users = require('./dbAccess/Users');
 var SocialIdentities = require('./dbAccess/SocialIdentities');
+
+var DummyUser = require('./controllers/DummyUser');
+
 var Constants = require('./Constants');
 var Utils = require('./Utils');
 
@@ -13,9 +16,6 @@ var console = process.console;
 
 
 var app = express();
-
-var shouldAddDummyFriend = false;
-
 configureWebServer(app);
 
 var server = app.listen(Constants.SERVER_PORT);
@@ -26,6 +26,10 @@ function configureWebServer(appObj) {
     //appObj.set('views', __dirname + '/tpl');
     //appObj.set('view engine', "jade");
     //appObj.engine('jade', require('jade').__express);
+
+    var bodyParser = require('body-parser');
+    app.use(bodyParser.json()); // support json encoded bodies
+    app.use(bodyParser.urlencoded({extended: true})); // support encoded bodies
 
     app.set("view options", {layout: false});
     app.use(express.static(__dirname + '/public'));
@@ -41,11 +45,19 @@ function configureWebServer(appObj) {
         console.log("[configureWebServer] WatchWith_DbEnv: " + dbEnv);
         if (dbEnv === 'development') {
             appObj.use('/logs', scribe.webPanel());
-            shouldAddDummyFriend = true;
-            // app.get('/dummyUserAdmin', function(req, res) {
-            //     res.render('dummyUserAdmin.html');
-            // });
+            DummyUser.enableDummyUser();
         }
+    }
+    if(DummyUser.shouldAddDummyFriend()) {
+        app.post('/dummyUserAdmin', function(req, res) {
+            console.time().info("[" + Constants.AppName + "] got post request for dummyUserAdmin");
+            var userEmail = req.body.userEmail;
+            var ytVideoUrl = req.body.ytVideoUrl;
+
+            sendVideoChangeToSpecificUser(ytVideoUrl, userEmail);
+            res.send("[" + Constants.AppName + " response: " + userEmail + ', ' + ytVideoUrl);
+            res.end();
+        });
     }
 }
 
@@ -244,11 +256,14 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
     };
 
     connectedUsers[userEmail] = connectedUserObj;
-    if (shouldAddDummyFriend) {
-        friendsList.push(getWatchWithDummyUserToUserFriendsList());
+    if (DummyUser.shouldAddDummyFriend()) {
+        friendsList.push(DummyUser.getDummyUserFriendData());
     }
     _friendsMegaList[userEmail] = friendsList;
     var friendsOnYoutube = addSocketToRooms(currentUserSocket, userEmail);
+    if (DummyUser.shouldAddDummyFriend()) {
+        friendsOnYoutube.push(DummyUser.getConnData());
+    }
 
     var dataToReplyWith = {};
     dataToReplyWith.action = Constants.PossibleActions.takeVideosBeingWatched;
@@ -259,7 +274,7 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
 }
 
 function sendVideoChangeToSpecificUser(ytVideoUrl, userEmail) {
-    if (shouldAddDummyFriend) {
+    if (DummyUser.shouldAddDummyFriend()) {
         var userConnData = connectedUsers[userEmail];
         if (userConnData) {
             var userSocket = io.sockets.connected[userConnData[Constants.CONN_DATA_KEYS.SOCKET_ID]];
@@ -268,36 +283,25 @@ function sendVideoChangeToSpecificUser(ytVideoUrl, userEmail) {
                 Utils.doGet('www.youtube.com', pathParam, function(response) {
                     if (response) {
                         var videoDetails = JSON.parse(response);
-
                         var dataToSend = {};
                         dataToSend.action = Constants.PossibleActions.takeFriendVideoChange;
+
                         var friendVidChange = {};
                         friendVidChange[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = 'asdffdsa';
-                        friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
-                        friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = ytVideoUrl;
-                        friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
-                        friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
-                        dataToSend.friendChangedVideo = friendVidChange;
+                        friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
+                            videoUrl : ytVideoUrl,
+                            title : videoDetails.title,
+                            thumbnail_url : videoDetails.thumbnail_url
+                        };
+                        DummyUser.setNewVideoData(ytVideoUrl, videoDetails.title, videoDetails.thumbnail_url);
 
+                        dataToSend.friendChangedVideo = friendVidChange;
                         userSocket.emit('message', dataToSend);
                     }
                 });
             }
         }
     }
-}
-
-function getWatchWithDummyUserToUserFriendsList () {
-    var dummyObjectFriendData = {
-        "displayName": Constants.AppName + "_DummyUser",
-        "etag":"\"xw0en60W6-NurXn4VBU-CMjSPEw/FK055O_WV2d36LkYqEc11YvRqUU\"",
-        "id":"asdffdsa",
-        "image":{"url":"https://lh4.googleusercontent.com/-ODjdRQ_Elgw/AAAAAAAAAAI/AAAAAAAAAIE/Lxsxh9IpCBY/photo.jpg?sz=50"},
-        "kind":"plus#person",
-        "objectType":"page",
-        "url":"https://plus.google.com/asdffdsa"
-    }
-    return dummyObjectFriendData;
 }
 
 function addSocketToRooms(currentUserSocket, userEmail) {
