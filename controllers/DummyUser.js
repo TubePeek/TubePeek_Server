@@ -1,19 +1,19 @@
 var Constants = require('../Constants');
 var Utils = require('../Utils');
+
 var shouldAddDummyFriend = false;
 
 // dummyUserEmail = 'dummyUser'
 // Legitimate users will have legitimate emailAddress
 // So this is safe to do
 var dummyUserConnData = {};
-//dummyUserConnData[Constants.CONN_DATA_KEYS.SOCKET_ID] = '';
 dummyUserConnData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = 'asdffdsa';
-//dummyUserConnData[Constants.CONN_DATA_KEYS.MY_ROOM] = "room_asdffdsa";
 dummyUserConnData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
     videoUrl : 'https://www.youtube.com/watch?v=hB-jBFDCd84',
     title    : 'My Darkest Days | The REAL Story Of Alpha M.',
     thumbnail_url : 'https://i.ytimg.com/vi/hB-jBFDCd84/hqdefault.jpg'
 };
+
 
 var dummyUser = {};
 
