@@ -24,8 +24,18 @@ function configureWebServer() {
     app.set("view options", {layout: false});
     app.use(express.static(__dirname + '/public'));
 
+    // http://stackoverflow.com/questions/4529586/render-basic-html-view-in-node-js-express
+    app.set('views', __dirname + '/public');
+    app.engine('html', require('ejs').renderFile);
+    //app.set('view engine', 'ejs');
+
     app.get('/', function(req, res) {
         res.render('index.html');
+    });
+
+    // https://developer.chrome.com/extensions/runtime#method-setUninstallURL
+    app.get('/uninstall', function(req, res) {
+        res.render('uninstall.html');
     });
 
     var dbEnvVariable = 'WatchWith_DbEnv';

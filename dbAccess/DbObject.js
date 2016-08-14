@@ -2,6 +2,12 @@ var dbAccess = require('../db');
 
 var DbObject = {};
 
+DbObject.findAll = function(callbackOnResult) {
+    var sqlSelectQuery = 'select * from ' + this.tableName;
+    dbAccess.raw(sqlSelectQuery, []).then(function(results) {
+        callbackOnResult(results.rows);
+    });
+}
 
 DbObject.findBy = function(columnName, columnVal, callbackOnResult) {
     var queryObj = {};
