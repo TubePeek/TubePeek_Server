@@ -27,10 +27,10 @@ source ~/.bashrc
 
 ##### Starting the server
 Local machine (Development mode)
-It'll restart our node server during development when files change so that we see the effects of the change immediately.
 ```terminal
 npm run startdev
 ```
+It'll restart our node server during development when files change so that we see the effects of the change immediately.
 
 On VPS (Production mode)
 ```terminal
