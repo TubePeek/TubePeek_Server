@@ -53,8 +53,8 @@ dummyUser.getConnData = function(googleUserId) {
     return dummyUserConnData[googleUserId];
 }
 
-dummyUser.setNewVideoData = function(newVideoUrl, newVideoTitle, newVideoThumbnail) {
-    dummyUserConnData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
+dummyUser.setNewVideoData = function(googleUserId, newVideoUrl, newVideoTitle, newVideoThumbnail) {
+    dummyUserConnData[googleUserId][Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
         videoUrl : newVideoUrl,
         title : newVideoTitle,
         thumbnail_url : newVideoThumbnail
@@ -77,7 +77,7 @@ dummyUser.sendDummyVidChangeToUser = function (googleUserId, ytVideoUrl, userSoc
                 title : videoDetails.title,
                 thumbnail_url : videoDetails.thumbnail_url
             };
-            me.setNewVideoData(ytVideoUrl, videoDetails.title, videoDetails.thumbnail_url);
+            me.setNewVideoData(googleUserId, ytVideoUrl, videoDetails.title, videoDetails.thumbnail_url);
 
             dataToSend.friendChangedVideo = friendVidChange;
             userSocket.emit('message', dataToSend);
