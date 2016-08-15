@@ -55,9 +55,10 @@ function setupDevEndPoints() {
         console.time().info("[" + Constants.AppName + "] got post request for /dummyUserAdmin");
         var userEmail = req.body.userEmail;
         var ytVideoUrl = req.body.ytVideoUrl;
+        var googleUserId = req.body.googleUserId;
 
-        SocketComms.sendDummyVidChangeToUser(ytVideoUrl, userEmail);
-        res.send("[" + Constants.AppName + " response: " + userEmail + ', ' + ytVideoUrl);
+        SocketComms.sendDummyVidChangeToUser(googleUserId, ytVideoUrl, userEmail);
+        res.send("[" + Constants.AppName + "] Response: \n" + googleUserId + ", " + userEmail + ', ' + ytVideoUrl);
         res.end();
     });
 }

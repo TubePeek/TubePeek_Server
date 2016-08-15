@@ -64,12 +64,12 @@ socketComm.sendRequestForIdentity = function (socket) {
     socket.emit('message', initialDataToSend);
 };
 
-socketComm.sendDummyVidChangeToUser = function (ytVideoUrl, userEmail) {
+socketComm.sendDummyVidChangeToUser = function (googleUserId, ytVideoUrl, userEmail) {
     var userConnData = connectedUsers[userEmail];
     if (userConnData) {
         var userSocket = io.sockets.connected[userConnData[Constants.CONN_DATA_KEYS.SOCKET_ID]];
         if (userSocket) {
-            dummyUser.sendDummyVidChangeToUser(ytVideoUrl, userSocket);
+            dummyUser.sendDummyVidChangeToUser(googleUserId, ytVideoUrl, userSocket);
         }
     }
 };
@@ -114,7 +114,7 @@ function changedVideo (socketToAClient, messageData) {
     var userEmail = messageData.userEmail;
     var videoUrl = messageData.videoUrl;
 
-    var pathParam = '/oembed?url=' + messageData.videoUrl + '&format=json';
+    var pathParam = '/oembed?format=json&url=' + messageData.videoUrl;
     Utils.doGet('www.youtube.com', pathParam, function(response) {
         console.time().info("\n\nCool! Got youtube video details:\n" + response + "\n\n");
         var videoDetails = JSON.parse(response);
@@ -162,7 +162,8 @@ function updateConnectedUsersData(currentUserSocket, userEmail, googleUserId, fr
     connectedUsers[userEmail] = connectedUserObj;
 
     if (dummyUser.shouldAddDummyFriend()) {
-        friendsList.push(dummyUser.getDummyUserFriendData());
+        friendsList.push(dummyUser.getDummyUserFriendData('asdffdsa'));
+        friendsList.push(dummyUser.getDummyUserFriendData('asdffdsa2'));
     }
     _friendsMegaList[userEmail] = friendsList;
     takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, friendsList);
@@ -187,7 +188,8 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
         }
         console.log("Number of friends on TubePeek: " + friendsWhoInstalledTubePeek.length);
         if (dummyUser.shouldAddDummyFriend()) {
-            friendVideosOnYoutubeNow.push(dummyUser.getConnData());
+            friendVideosOnYoutubeNow.push(dummyUser.getConnData('asdffdsa'));
+            friendVideosOnYoutubeNow.push(dummyUser.getConnData('asdffdsa2'));
         }
         sendToUserAndFriends(friendVideosOnYoutubeNow, friendsWhoInstalledTubePeek);
     });
