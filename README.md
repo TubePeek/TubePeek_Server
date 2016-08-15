@@ -26,10 +26,16 @@ source ~/.bashrc
 ```
 
 ##### Starting the server
+Local machine (Development mode)
+It'll restart our node server during development when files change so that we see the effects of the change immediately.
 ```terminal
-npm start
+npm run startdev
 ```
-It'll run migrations if necessary. It'll also restart our node server during development when files change so that we see the effects of the change immediately.
+
+On VPS (Production mode)
+```terminal
+pm2 start TubePeekServer.js
+```
 
 ##### Database schema migration
 ```
