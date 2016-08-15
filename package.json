@@ -22,7 +22,8 @@
   "main": "index.js",
   "scripts": {
     "test": "./node_modules/.bin/jasmine-node spec",
-    "start": "./node_modules/.bin/nodemon index.js"
+    "startdev": "./node_modules/.bin/nodemon TubePeekServer.js",
+    "start": "node TubePeekServer.js"
   },
   "author": "Ariaroo Efe"
 }
