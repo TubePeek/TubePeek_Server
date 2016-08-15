@@ -3,15 +3,22 @@ var Utils = require('../Utils');
 
 var shouldAddDummyFriend = false;
 
-// dummyUserEmail = 'dummyUser'
-// Legitimate users will have legitimate emailAddress
-// So this is safe to do
 var dummyUserConnData = {};
-dummyUserConnData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = 'asdffdsa';
-dummyUserConnData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
+
+dummyUserConnData['asdffdsa'] = {};
+dummyUserConnData['asdffdsa2'] = {};
+
+dummyUserConnData['asdffdsa'][Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = 'asdffdsa';
+dummyUserConnData['asdffdsa'][Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
     videoUrl : 'https://www.youtube.com/watch?v=hB-jBFDCd84',
     title    : 'My Darkest Days | The REAL Story Of Alpha M.',
     thumbnail_url : 'https://i.ytimg.com/vi/hB-jBFDCd84/hqdefault.jpg'
+};
+dummyUserConnData['asdffdsa2'][Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = 'asdffdsa2';
+dummyUserConnData['asdffdsa2'][Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
+    videoUrl : 'https://www.youtube.com/watch?v=yemQEEPFJBM',
+    title    : '17.- Heidegger on "Authenticity"',
+    thumbnail_url : 'https://i.ytimg.com/vi/yemQEEPFJBM/hqdefault.jpg'
 };
 
 
@@ -29,22 +36,21 @@ dummyUser.disableDummyUser = function() {
     shouldAddDummyFriend = false;
 };
 
-dummyUser.getDummyUserFriendData = function() {
+dummyUser.getDummyUserFriendData = function(googleUserId) {
     var dummyObjectFriendData = {
         "displayName": Constants.AppName + "_DummyUser",
         "etag":"\"xw0en60W6-NurXn4VBU-CMjSPEw/FK055O_WV2d36LkYqEc11YvRqUU\"",
-        "id":"asdffdsa",
+        "id": googleUserId,
         "image":{"url":"https://lh4.googleusercontent.com/-ODjdRQ_Elgw/AAAAAAAAAAI/AAAAAAAAAIE/Lxsxh9IpCBY/photo.jpg?sz=50"},
         "kind":"plus#person",
         "objectType":"page",
-        "url":"https://plus.google.com/asdffdsa"
+        "url":"https://plus.google.com/" + googleUserId
     }
     return dummyObjectFriendData;
 }
 
-dummyUser.getConnData = function() {
-    //return dummyUserConnData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO];
-    return dummyUserConnData;
+dummyUser.getConnData = function(googleUserId) {
+    return dummyUserConnData[googleUserId];
 }
 
 dummyUser.setNewVideoData = function(newVideoUrl, newVideoTitle, newVideoThumbnail) {
@@ -55,8 +61,8 @@ dummyUser.setNewVideoData = function(newVideoUrl, newVideoTitle, newVideoThumbna
     }
 };
 
-dummyUser.sendDummyVidChangeToUser = function (ytVideoUrl, userSocket) {
-    var pathParam = '/oembed?url=' + ytVideoUrl + '&format=json';
+dummyUser.sendDummyVidChangeToUser = function (googleUserId, ytVideoUrl, userSocket) {
+    var pathParam = '/oembed?format=json&url=' + ytVideoUrl;
     var me = this;
     Utils.doGet('www.youtube.com', pathParam, function(response) {
         if (response) {
@@ -65,7 +71,7 @@ dummyUser.sendDummyVidChangeToUser = function (ytVideoUrl, userSocket) {
             dataToSend.action = Constants.PossibleActions.takeFriendVideoChange;
 
             var friendVidChange = {};
-            friendVidChange[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = 'asdffdsa';
+            friendVidChange[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
             friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
                 videoUrl : ytVideoUrl,
                 title : videoDetails.title,
