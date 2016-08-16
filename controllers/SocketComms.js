@@ -30,6 +30,7 @@ socketComm.initialize = function(scribeConsole, socketIo, dummy) {
 
 socketComm.handleClientMessage = function(socket, data) {
     var clientAction = data.action;
+    //console.time().info("server received msg: " + JSON.stringify(data));
     var serverReaction = clientActionSelector[clientAction];
 
     if (typeof serverReaction == 'function') {
@@ -200,7 +201,7 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
         dataToReplyWith.friendsOnTubePeek = friendsWhoInstalledTubePeek;
 
         currentUserSocket.emit('message', dataToReplyWith);
-        broadcastOnlineStatus(currentUserSocket, true, userEmail, googleUserId, "room_" + googleUserId);
+        //broadcastOnlineStatus(currentUserSocket, true, userEmail, googleUserId, "room_" + googleUserId);
     }
 }
 
