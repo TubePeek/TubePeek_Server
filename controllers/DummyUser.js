@@ -80,6 +80,7 @@ dummyUser.sendDummyVidChangeToUser = function (googleUserId, ytVideoUrl, userSoc
             me.setNewVideoData(googleUserId, ytVideoUrl, videoDetails.title, videoDetails.thumbnail_url);
 
             dataToSend.friendChangedVideo = friendVidChange;
+            
             userSocket.emit('message', dataToSend);
         }
     });

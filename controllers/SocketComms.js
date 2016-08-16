@@ -30,6 +30,7 @@ socketComm.initialize = function(scribeConsole, socketIo, dummy) {
 
 socketComm.handleClientMessage = function(socket, data) {
     var clientAction = data.action;
+    //console.time().info("server received msg: " + JSON.stringify(data));
     var serverReaction = clientActionSelector[clientAction];
 
     if (typeof serverReaction == 'function') {

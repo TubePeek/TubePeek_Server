@@ -13,6 +13,11 @@ redisControl.initiateConnection = function () {
         console.log('[' + Constants.AppName + '] connected to redis');
         isConnected = true;
     });
+
+    redisClient.on("error", function (err) {
+        console.log('[' + Constants.AppName + '] DISConnected from redis. \n' + err);
+        isConnected = false;
+    });
 }
 
 redisControl.isConnectedToRedis = function () {
