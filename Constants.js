@@ -27,5 +27,7 @@ constants.PossibleActions = {
 };
 
 constants.SERVER_PORT = 3700;
+constants.API_VERSION_KEY = "version";
+constants.API_VERSION_VALUE = "/api/actions/v1";
 
 module.exports = constants;
