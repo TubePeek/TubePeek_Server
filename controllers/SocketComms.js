@@ -201,7 +201,7 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
         dataToReplyWith.friendsOnTubePeek = friendsWhoInstalledTubePeek;
 
         currentUserSocket.emit('message', dataToReplyWith);
-        broadcastOnlineStatus(currentUserSocket, true, userEmail, googleUserId, "room_" + googleUserId);
+        //broadcastOnlineStatus(currentUserSocket, true, userEmail, googleUserId, "room_" + googleUserId);
     }
 }
 
