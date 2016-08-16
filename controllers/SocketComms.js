@@ -205,8 +205,18 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
     }
 }
 
+function broadcastOnlineStatus(clientSocket, onlineState, userEmail, googleUserId, roomId) {
+    var dataToBroadcast = {};
+    dataToBroadcast.action = Constants.PossibleActions.takeFriendOnlineStatus;
+    dataToBroadcast.userEmail = userEmail;
+    dataToBroadcast[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
+    dataToBroadcast.onlineState = onlineState;
+
+    clientSocket.broadcast.to(roomId).emit("message", dataToBroadcast);
+}
+
 function addSocketToRooms_AlsoGetActiveFriendVids (currentUserSocket, userEmail) {
-    var friendsOnYoutube = [];
+    var friendVideosOnYoutube = [];
     var currentUserConnData = connectedUsers[userEmail];
     var myFriendsList = _friendsMegaList[userEmail];
 
@@ -217,15 +227,18 @@ function addSocketToRooms_AlsoGetActiveFriendVids (currentUserSocket, userEmail)
                 var possibleFriendGoogleId = possibleFriendConnData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
 
                 if(Utils.isMyGoogleFriend(myFriendsList, possibleFriendGoogleId)) {
-                    var friendVidChange = {};
-                    friendVidChange[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = possibleFriendConnData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
-                    friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
+                    var friendVideo = {};
+                    friendVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = possibleFriendConnData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+                    friendVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
 
-                    var possFriendVidData = possibleFriendConnData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO];
-                    friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = possFriendVidData.videoUrl;
-                    friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = possFriendVidData.title;
-                    friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = possFriendVidData.thumbnail_url;
-                    friendsOnYoutube.push(friendVidChange);
+                    var aFriendVidData = possibleFriendConnData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO];
+                    var aFriendVideoUrl = aFriendVidData.videoUrl;
+                    if (aFriendVideoUrl && aFriendVideoUrl.length > 0) {// If the friend has viewed an actual youtube video
+                        friendVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = aFriendVideoUrl;
+                        friendVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = aFriendVidData.title;
+                        friendVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = aFriendVidData.thumbnail_url;
+                        friendVideosOnYoutube.push(friendVideo);
+                    }
 
                     var friendSocket = io.sockets.connected[possibleFriendConnData[Constants.CONN_DATA_KEYS.SOCKET_ID]];
                     if(friendSocket) {
@@ -239,17 +252,7 @@ function addSocketToRooms_AlsoGetActiveFriendVids (currentUserSocket, userEmail)
             }
         }
     }
-    return friendsOnYoutube;
-}
-
-function broadcastOnlineStatus(clientSocket, onlineState, userEmail, googleUserId, roomId) {
-    var dataToBroadcast = {};
-    dataToBroadcast.action = Constants.PossibleActions.takeFriendOnlineStatus;
-    dataToBroadcast.userEmail = userEmail;
-    dataToBroadcast[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
-    dataToBroadcast.onlineState = onlineState;
-
-    clientSocket.broadcast.to(roomId).emit("message", dataToBroadcast);
+    return friendVideosOnYoutube;
 }
 
 module.exports = socketComm;
