@@ -1,5 +1,6 @@
 "use strict";
 
+var http = require('http');
 var express = require("express");
 //var Hashids = require('hashids');
 var DummyUser = require('./controllers/DummyUser');
@@ -11,9 +12,14 @@ var console = process.console;
 
 var app = express();
 configureWebServer();
-var server = app.listen(Constants.SERVER_PORT);
+var webSiteServer = app.listen(Constants.WEBSITE_PORT);
 
-var io = require('socket.io').listen(server);
+var webSocketServer = http.createServer(function (req, res) {
+    res.write('[TubePeek] WebSocketServer! Move along!\n');
+    res.end();
+}).listen(Constants.WEB_SOCKET_PORT);
+
+var io = require('socket.io').listen(webSocketServer);
 setupCommunications();
 
 function configureWebServer() {

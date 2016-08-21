@@ -26,7 +26,8 @@ constants.PossibleActions = {
     acknowledge : "acknowledge"
 };
 
-constants.SERVER_PORT = 80;
+constants.WEBSITE_PORT = 3700;
+constants.WEB_SOCKET_PORT = 3701;
 constants.API_VERSION_KEY = "version";
 constants.API_VERSION_VALUE = "/api/actions/v1";
 
