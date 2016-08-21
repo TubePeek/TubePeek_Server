@@ -50,7 +50,7 @@ npm test
 ##### Viewing logs
 To view pretty logs during development, access the following address on a browser:
 ```terminal
-http://localhost/logs
+http://localhost:3700/logs
 ```
 
 ##### Further study
