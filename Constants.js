@@ -3,14 +3,17 @@ var constants = {};
 
 constants.AppName = "TubePeek";
 
-// This is necessary so that I don't use magic strings everywhere
+constants.SERVER_PORT = 3700;
+constants.API_VERSION_KEY = "version";
+constants.API_VERSION_VALUE = "/api/actions/v1";
+
+// Connection data keys: This is necessary so that I don't use magic strings everywhere
 constants.CONN_DATA_KEYS = {
     SOCKET_ID : 'socketId',
     GOOGLE_USER_ID : 'googleUserId',
     MY_ROOM: 'myRoom',
     CURRENT_VIDEO: 'videoData'
 };
-
 
 constants.PossibleActions = {
     pleaseIdentifyYourself : 'pleaseIdentifyYourself',       // The server will send this to the client
@@ -20,14 +23,15 @@ constants.PossibleActions = {
     userChangedOnlineStatus : 'userChangedOnlineStatus',
     takeFriendOnlineStatus : 'takeFriendOnlineStatus',
 
+    // Not yet. Hopefully, in the next commit
+    // pleaseDisableThisFriend : 'pleaseDisableThisFriend',
+    // pleaseEnableThisFriend: 'pleaseEnableThisFriend',
+    // pleaseAddThisFriendToMyFriendsList : 'pleaseAddThisFriendToMyFriendsList',
+
     changedVideo : 'changedVideo',
     takeFriendVideoChange : 'takeFriendVideoChange',
 
     acknowledge : "acknowledge"
 };
-
-constants.SERVER_PORT = 3700;
-constants.API_VERSION_KEY = "version";
-constants.API_VERSION_VALUE = "/api/actions/v1";
 
 module.exports = constants;
