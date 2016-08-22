@@ -3,6 +3,10 @@ var constants = {};
 
 constants.AppName = "TubePeek";
 
+// Nginx directs traffic on port 80 to port 3700
+// On ubuntu VPS use command:
+// sudo emacs /etc/nginx/sites-enabled/default
+// to view configuration
 constants.SERVER_PORT = 3700;
 constants.API_VERSION_KEY = "version";
 constants.API_VERSION_VALUE = "/api/actions/v1";
