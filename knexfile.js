@@ -15,6 +15,10 @@ function getDigitalOceanDbConfig() {
     return getDevDbConfig();
 }
 
+function getAmazonEc2DbConfig() {
+    return getDevDbConfig();
+}
+
 function getHerokuProductionDbConfig () {
     var theDbConfig = null;
 
@@ -35,6 +39,7 @@ function getHerokuProductionDbConfig () {
 }
 
 module.exports = {
+    AmazonEc2: getAmazonEc2DbConfig(),
     HerokuProduction: getHerokuProductionDbConfig(),
     DigitalOceanProduction: getDigitalOceanDbConfig(),
     development: getDevDbConfig()
