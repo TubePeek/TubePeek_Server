@@ -38,13 +38,8 @@ dummyUser.disableDummyUser = function() {
 
 dummyUser.getDummyUserFriendData = function(googleUserId) {
     var dummyObjectFriendData = {
-        "displayName": Constants.AppName + "_DummyUser",
-        "etag":"\"xw0en60W6-NurXn4VBU-CMjSPEw/FK055O_WV2d36LkYqEc11YvRqUU\"",
-        "id": googleUserId,
-        "image":{"url":"https://lh4.googleusercontent.com/-ODjdRQ_Elgw/AAAAAAAAAAI/AAAAAAAAAIE/Lxsxh9IpCBY/photo.jpg?sz=50"},
-        "kind":"plus#person",
-        "objectType":"page",
-        "url":"https://plus.google.com/" + googleUserId
+        "fullName": Constants.AppName + "_DummyUser",
+        "imageUrl":"https://lh4.googleusercontent.com/-ODjdRQ_Elgw/AAAAAAAAAAI/AAAAAAAAAIE/Lxsxh9IpCBY/photo.jpg?sz=50"
     }
     return dummyObjectFriendData;
 }
@@ -54,36 +49,46 @@ dummyUser.getConnData = function(googleUserId) {
 }
 
 dummyUser.setNewVideoData = function(googleUserId, newVideoUrl, newVideoTitle, newVideoThumbnail) {
-    dummyUserConnData[googleUserId][Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
-        videoUrl : newVideoUrl,
-        title : newVideoTitle,
-        thumbnail_url : newVideoThumbnail
+    var theDummyUser = dummyUserConnData[googleUserId];
+    if(theDummyUser) {
+        theDummyUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
+            videoUrl : newVideoUrl,
+            title : newVideoTitle,
+            thumbnail_url : newVideoThumbnail
+        }
     }
 };
 
 dummyUser.sendDummyVidChangeToUser = function (googleUserId, ytVideoUrl, userSocket) {
-    var pathParam = '/oembed?format=json&url=' + ytVideoUrl;
-    var me = this;
-    Utils.doGet('www.youtube.com', pathParam, function(response) {
-        if (response) {
-            var videoDetails = JSON.parse(response);
-            var dataToSend = {};
-            dataToSend.action = Constants.PossibleActions.takeFriendVideoChange;
+    console.log("Inside sendDummyVidChangeToUser!");
+    var theDummyUser = dummyUserConnData[googleUserId];
+    if(theDummyUser) {
+        var pathParam = '/oembed?format=json&url=' + ytVideoUrl;
+        var me = this;
+        Utils.doGet('www.youtube.com', pathParam, function(response) {
+            console.log("After getting youtube video details");
+            if (response) {
+                var videoDetails = JSON.parse(response);
+                var dataToSend = {};
+                dataToSend.action = Constants.PossibleActions.takeFriendVideoChange;
 
-            var friendVidChange = {};
-            friendVidChange[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
-            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
-                videoUrl : ytVideoUrl,
-                title : videoDetails.title,
-                thumbnail_url : videoDetails.thumbnail_url
-            };
-            me.setNewVideoData(googleUserId, ytVideoUrl, videoDetails.title, videoDetails.thumbnail_url);
+                var friendVidChange = {};
+                friendVidChange[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
+                friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
+                    videoUrl : ytVideoUrl,
+                    title : videoDetails.title,
+                    thumbnail_url : videoDetails.thumbnail_url
+                };
+                me.setNewVideoData(googleUserId, ytVideoUrl, videoDetails.title, videoDetails.thumbnail_url);
 
-            dataToSend.friendChangedVideo = friendVidChange;
-            
-            userSocket.emit('message', dataToSend);
-        }
-    });
+                dataToSend.friendChangedVideo = friendVidChange;
+                console.log("Inside sendDummyVidChangeToUser! Sending vid change to user!");
+                userSocket.emit('message', dataToSend);
+            }
+        });
+    } else {
+        console.log("Not a valid dummyUser! Use googleUserId: asdffdsa OR asdffdsa2");
+    }
 }
 
 module.exports = dummyUser;
