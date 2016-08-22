@@ -74,8 +74,9 @@ function setupCommunications() {
             SocketComms.handleClientMessage(socket, data);
         });
         socket.on('disconnect', function() {
-            var disconnectedUserEmail = socket.userEmail;
-            SocketComms.handleClientDisconnect(socket, disconnectedUserEmail);
+            var userEmail = socket.userEmail;
+            var googleUserId = socket[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+            SocketComms.handleClientDisconnect(socket, userEmail, googleUserId);
         });
     });
     console.time().info("\nServer initialization done. Ready to receive requests.");
