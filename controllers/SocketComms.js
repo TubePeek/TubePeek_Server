@@ -181,7 +181,7 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
                 var foundFriend = friendsList[aSocialIdentity.uid];
                 if(foundFriend) {
                     console.log("Found a friend who has installed TubePeek.");
-                    friendsWhoInstalledTubePeek[foundFriend.id] = foundFriend;
+                    friendsWhoInstalledTubePeek[aSocialIdentity.uid] = foundFriend;
                 }
             }
         }
