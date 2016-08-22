@@ -65,7 +65,7 @@ dummyUser.sendDummyVidChangeToUser = function (googleUserId, ytVideoUrl, userSoc
     if(theDummyUser) {
         var pathParam = '/oembed?format=json&url=' + ytVideoUrl;
         var me = this;
-        Utils.doGet('www.youtube.com', pathParam, function(response) {
+        Utils.doGet('http://www.youtube.com', pathParam, function(response) {
             console.log("After getting youtube video details");
             if (response) {
                 var videoDetails = JSON.parse(response);

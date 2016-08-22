@@ -1,24 +1,14 @@
-var http = require('http');
+var request = require('request');
 
 var utils = {};
 
 utils.doGet = function (hostParam, pathParam, callback) {
-    var options = {
-        host: hostParam,
-        path: pathParam
-    };
-    var req = http.get(options, function(res) {
-        var bodyChunks = [];
-        res.on('data', function(chunk) {
-            bodyChunks.push(chunk);
-        }).on('end', function() {
-            var body = Buffer.concat(bodyChunks);
+    request(hostParam + pathParam, function (error, response, body) {
+        if (!error && response.statusCode == 200) {
             callback(body);
-        })
-    });
-
-    req.on('error', function(e) {
-        console.log('[Utils.js] ERROR: ' + e.message);
+        } else {
+            console.log('[Utils.js] ERROR: ' + error.message);
+        }
     });
 }
 

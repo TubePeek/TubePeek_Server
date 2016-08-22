@@ -118,7 +118,7 @@ function changedVideo (socketToAClient, messageData) {
     var videoUrl = messageData.videoUrl;
 
     var pathParam = '/oembed?format=json&url=' + messageData.videoUrl;
-    Utils.doGet('www.youtube.com', pathParam, function(response) {
+    Utils.doGet('http://www.youtube.com', pathParam, function(response) {
         console.time().info("\n\nCool! Got youtube video details:\n" + response + "\n\n");
         var videoDetails = JSON.parse(response);
 
