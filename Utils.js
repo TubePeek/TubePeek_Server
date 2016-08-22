@@ -18,7 +18,7 @@ utils.doGet = function (hostParam, pathParam, callback) {
     });
 
     req.on('error', function(e) {
-        console.log('ERROR: ' + e.message);
+        console.log('[Utils.js] ERROR: ' + e.message);
     });
 }
 
