@@ -113,32 +113,27 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
 }
 
 function changedVideo (socketToAClient, messageData) {
-    console.time().info("\nIn changedVideo! Got video change: \n" + JSON.stringify(messageData));
     var userEmail = messageData.userEmail;
     var videoUrl = messageData.videoUrl;
+    var pathParam = '/oembed?format=json&url=' + videoUrl;
 
-    var pathParam = '/oembed?format=json&url=' + messageData.videoUrl;
-    Utils.doGet('http://www.youtube.com', pathParam, function(response) {
-        console.time().info("\n\nCool! Got youtube video details:\n" + response + "\n\n");
-        var videoDetails = JSON.parse(response);
+    Utils.doGet('http://www.youtube.com', pathParam, function(youtubeResponse) {
+        var videoDetails = JSON.parse(youtubeResponse);
 
         var currentUser = connectedUsers[userEmail];
         if(currentUser) {
-            currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
-            currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
-            currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
-
+            currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
+                videoUrl : videoUrl,
+                title : videoDetails.title,
+                thumbnail_url : videoDetails.thumbnail_url
+            };
             connectedUsers[userEmail] = currentUser;
             //--
             var dataToBroadcast = {};
             dataToBroadcast.action = Constants.PossibleActions.takeFriendVideoChange;
-            var friendVidChange = {};
-            friendVidChange[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
-            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
-            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
-            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
-            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
-            dataToBroadcast.friendChangedVideo = friendVidChange;
+            dataToBroadcast.friendChangedVideo = {};
+            dataToBroadcast.friendChangedVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+            dataToBroadcast.friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO];
 
             var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             console.time().info("Room to broadcast to: " + roomToBroadcastTo);
@@ -180,12 +175,10 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
 
                 var foundFriend = friendsList[aSocialIdentity.uid];
                 if(foundFriend) {
-                    //console.log("Found a friend who has installed TubePeek.");
                     friendsWhoInstalledTubePeek[aSocialIdentity.uid] = foundFriend;
                 }
             }
         }
-        console.log("Number of friends on TubePeek: " + Object.keys(friendsWhoInstalledTubePeek).length);
         if (dummyUser.shouldAddDummyFriend()) {
             friendVideosOnYoutubeNow['asdffdsa'] = dummyUser.getConnData('asdffdsa');
             friendVideosOnYoutubeNow['asdffdsa2'] = dummyUser.getConnData('asdffdsa2');
