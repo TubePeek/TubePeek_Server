@@ -35,6 +35,10 @@ function configureWebServer() {
 
     // https://developer.chrome.com/extensions/runtime#method-setUninstallURL
     app.get('/uninstall', function(req, res) {
+        var gId = req.query.gId;
+        var browser = req.query.browser;
+        console.log("gId: " + gId + ", browser: " + browser);
+
         res.render('uninstall.html');
     });
 
