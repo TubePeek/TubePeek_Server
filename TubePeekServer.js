@@ -2,20 +2,17 @@
 
 var express = require("express");
 //var Hashids = require('hashids');
-var DummyUser = require('./controllers/DummyUser');
-var FriendExclusions = require('./dbAccess/FriendExclusions');
-var SocketComms = require('./controllers/SocketComms');
 var Constants = require('./Constants');
+var SocketComms = require('./controllers/SocketComms');
+var DummyUser = require('./controllers/DummyUser');
+var routes = require('./routes');
 
 var scribe = require('scribe-js')();    // if you need to customize scribe.
 var console = process.console;
 
 var app = express();
-configureWebServer();
-var server = app.listen(Constants.SERVER_PORT);
 
-var io = require('socket.io').listen(server);
-setupCommunications();
+configureWebServer();
 
 function configureWebServer() {
     var bodyParser = require('body-parser');
@@ -30,88 +27,20 @@ function configureWebServer() {
     app.engine('html', require('ejs').renderFile);
     //app.set('view engine', 'ejs');
 
-    app.get('/', function(req, res) {
-        res.render('index.html');
-    });
-
-    app.post('/api/v1/friendExclusion/', function(req, res) {
-        console.time().info("[" + Constants.AppName + "] got post post for /friendExclusion");
-        var userEmail = req.body.userEmail;
-        var friendGoogleUserId = req.body.friendGoogleUserId;
-        var socialProvider = req.body.socialProvider;
-        var friendFullName = req.body.friendFullName;
-        var friendImageUrl = req.body.friendImageUrl;
-        console.log("userEmail: " + userEmail + ", friendGoogleUserId: " + friendGoogleUserId + ", friendFullName: " + friendFullName + ", friendImageUrl: " + friendImageUrl);
-
-        if (userEmail && friendGoogleUserId && socialProvider && friendFullName && friendImageUrl) {
-            FriendExclusions.add(userEmail, socialProvider, friendGoogleUserId, friendFullName, friendImageUrl, function (idOfNewExclusion) {
-                if(idOfNewExclusion) {
-                    res.status(201).end();
-                } else {
-                    res.status(500).json({"error": "Gosh, darn it. Don't know what happened."});
-                }
-            });
-        } else { // Bad request
-            res.status(400).end();
-        }
-    });
-
-    // Resource does not exist - 404 Not Found
-    // Resource already deleted - 410 Gone
-    // Users does not have permission - 403 Forbidden
-    app.delete('/api/v1/friendExclusion/', function(req, res) {
-        console.time().info("[" + Constants.AppName + "] got post delete for /friendExclusion");
-        var userEmail = req.body.userEmail;
-        var friendGoogleUserId = req.body.friendGoogleUserId;
-
-        if (userEmail && friendGoogleUserId) {
-            FriendExclusions.delete(userEmail, friendGoogleUserId, function (numRowsDeleted) {
-                if (numRowsDeleted === 1) {
-                    res.status(204).end();
-                } else {
-                    res.status(404).end();
-                }
-            });
-        } else { // Bad request
-            res.status(400).end();
-        }
-    });
-
-    // https://developer.chrome.com/extensions/runtime#method-setUninstallURL
-    app.get('/uninstall', function(req, res) {
-        var gId = req.query.gId;
-        var browser = req.query.browser;
-        console.log("gId: " + gId + ", browser: " + browser);
-
-        res.render('uninstall.html');
-    });
+    routes.init(app, DummyUser, SocketComms, console);
 
     var dbEnvVariable = 'WatchWith_DbEnv';
-    if (process.env[dbEnvVariable] !== undefined) {
-        var dbEnv = process.env[dbEnvVariable];
-        if (dbEnv === 'development') {
-            setupDevEndPoints();
-        }
+    var dbEnv = process.env[dbEnvVariable];
+    if (dbEnv && dbEnv === 'development') {
+        app.use('/logs', scribe.webPanel());
     }
+
+    var server = app.listen(Constants.SERVER_PORT);
+    var io = require('socket.io').listen(server);
+    setupCommunications(io);
 }
 
-function setupDevEndPoints() {
-    app.use('/logs', scribe.webPanel());
-
-    DummyUser.enableDummyUser();
-    app.post('/dummyUserAdmin', function(req, res) {
-        console.time().info("[" + Constants.AppName + "] got post request for /dummyUserAdmin");
-        var userEmail = req.body.userEmail;
-        var ytVideoUrl = req.body.ytVideoUrl;
-        var googleUserId = req.body.googleUserId;
-
-        SocketComms.sendDummyVidChangeToUser(googleUserId, ytVideoUrl, userEmail);
-        res.send("[" + Constants.AppName + "] Response: \n" + googleUserId + ", " + userEmail + ', ' + ytVideoUrl);
-        res.end();
-    });
-}
-
-function setupCommunications() {
+function setupCommunications(io) {
     SocketComms.initialize(console, io, DummyUser);
 
     io.sockets.on('connection', function (socket) {
