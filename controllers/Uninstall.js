@@ -6,6 +6,7 @@ var uninstallControl = {
     setup : function (app, scribeConsole) {
         console = scribeConsole;
         
+        // https://developer.chrome.com/extensions/runtime#method-setUninstallURL
         app.get('/uninstall', doUninstallDance);
     }
 };

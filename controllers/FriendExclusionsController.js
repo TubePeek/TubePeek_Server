@@ -22,11 +22,18 @@ var addExclusion = function (req, res) {
     var friendImageUrl = req.body.friendImageUrl;
 
     if (userEmail && friendGoogleUserId && socialProvider && friendFullName && friendImageUrl) {
-        FriendExclusions.add(userEmail, socialProvider, friendGoogleUserId, friendFullName, friendImageUrl, function (idOfNewExclusion) {
-            if(idOfNewExclusion) {
-                res.status(201).end();
+        FriendExclusions.doesExclusionExist(userEmail, friendGoogleUserId, function (yes) {
+            if(yes) {
+                res.status(409).end();
             } else {
-                res.status(500).json({"error": "Gosh, darn it. Don't know what happened."});
+                FriendExclusions.add(userEmail, socialProvider, friendGoogleUserId,
+                                    friendFullName, friendImageUrl, function (idOfNewExclusion) {
+                    if(idOfNewExclusion) {
+                        res.status(201).end();
+                    } else {
+                        res.status(500).json({"error": "Gosh, darn it. Don't know what happened."});
+                    }
+                });
             }
         });
     } else { // Bad request
@@ -34,6 +41,9 @@ var addExclusion = function (req, res) {
     }
 }
 
+// Resource does not exist - 404 Not Found
+// Resource already deleted - 410 Gone
+// Users does not have permission - 403 Forbidden
 var deleteExclusion = function (req, res) {
     console.time().info("[" + Constants.AppName + "] got delete for /friendExclusion");
     var userEmail = req.body.userEmail;
