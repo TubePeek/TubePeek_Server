@@ -38,17 +38,22 @@ function configureWebServer() {
         console.time().info("[" + Constants.AppName + "] got post post for /friendExclusion");
         var userEmail = req.body.userEmail;
         var friendGoogleUserId = req.body.friendGoogleUserId;
+        var socialProvider = req.body.socialProvider;
         var friendFullName = req.body.friendFullName;
         var friendImageUrl = req.body.friendImageUrl;
-        //console.log("userEmail: " + userEmail + ", friendGoogleUserId: " + friendGoogleUserId + ", friendFullName: " + friendFullName + ", friendImageUrl: " + friendImageUrl);
+        console.log("userEmail: " + userEmail + ", friendGoogleUserId: " + friendGoogleUserId + ", friendFullName: " + friendFullName + ", friendImageUrl: " + friendImageUrl);
 
-        FriendExclusions.add(userEmail, 'google', friendGoogleUserId, friendFullName, friendImageUrl, function (idOfNewExclusion) {
-            if(idOfNewExclusion) {
-                res.status(201).end();
-            } else {
-                res.status(500).json({"error": "Gosh, darn it. Don't know what happened."});
-            }
-        });
+        if (userEmail && friendGoogleUserId && socialProvider && friendFullName && friendImageUrl) {
+            FriendExclusions.add(userEmail, socialProvider, friendGoogleUserId, friendFullName, friendImageUrl, function (idOfNewExclusion) {
+                if(idOfNewExclusion) {
+                    res.status(201).end();
+                } else {
+                    res.status(500).json({"error": "Gosh, darn it. Don't know what happened."});
+                }
+            });
+        } else { // Bad request
+            res.status(400).end();
+        }
     });
 
     // Resource does not exist - 404 Not Found
@@ -59,13 +64,17 @@ function configureWebServer() {
         var userEmail = req.body.userEmail;
         var friendGoogleUserId = req.body.friendGoogleUserId;
 
-        FriendExclusions.delete(userEmail, friendGoogleUserId, function (numRowsDeleted) {
-            if (numRowsDeleted === 1) {
-                res.status(204).end();
-            } else {
-                res.status(404).end();
-            }
-        });
+        if (userEmail && friendGoogleUserId) {
+            FriendExclusions.delete(userEmail, friendGoogleUserId, function (numRowsDeleted) {
+                if (numRowsDeleted === 1) {
+                    res.status(204).end();
+                } else {
+                    res.status(404).end();
+                }
+            });
+        } else { // Bad request
+            res.status(400).end();
+        }
     });
 
     // https://developer.chrome.com/extensions/runtime#method-setUninstallURL
