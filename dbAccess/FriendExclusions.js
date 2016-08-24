@@ -16,9 +16,22 @@ FriendExclusions.prototype = dbObject;
 
 var friendExclusionsTable = new FriendExclusions('friend_exclusions');
 
+friendExclusionsTable.doesExclusionExist = function (userEmail, friendGoogleUserId, callbackOnResult) {
+    return this.knex(this.tableName).where({
+        'email_address': userEmail,
+        'friend_uid': friendGoogleUserId,
+    }).select('*').then(function (results) {
+        console.log("Inside doesExclusionExist! results: " + JSON.stringify(results));
+        if (results && results.length == 0) {
+            callbackOnResult(false);
+        } else {
+            callbackOnResult(true);
+        }
+    });
+}
+
 friendExclusionsTable.add = function(userEmail, socialProvider, friendGoogleUserId,
     friendFullName, friendImageUrl, callbackOnInsertDone) {
-
     dbObject.knex.insert({
         'email_address': userEmail,
         'social_provider': socialProvider,
