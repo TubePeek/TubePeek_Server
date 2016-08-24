@@ -3,6 +3,7 @@
 var express = require("express");
 //var Hashids = require('hashids');
 var DummyUser = require('./controllers/DummyUser');
+var FriendExclusions = require('./dbAccess/FriendExclusions');
 var SocketComms = require('./controllers/SocketComms');
 var Constants = require('./Constants');
 
@@ -31,6 +32,40 @@ function configureWebServer() {
 
     app.get('/', function(req, res) {
         res.render('index.html');
+    });
+
+    app.post('/api/v1/friendExclusion/', function(req, res) {
+        console.time().info("[" + Constants.AppName + "] got post post for /friendExclusion");
+        var userEmail = req.body.userEmail;
+        var friendGoogleUserId = req.body.friendGoogleUserId;
+        var friendFullName = req.body.friendFullName;
+        var friendImageUrl = req.body.friendImageUrl;
+        //console.log("userEmail: " + userEmail + ", friendGoogleUserId: " + friendGoogleUserId + ", friendFullName: " + friendFullName + ", friendImageUrl: " + friendImageUrl);
+
+        FriendExclusions.add(userEmail, 'google', friendGoogleUserId, friendFullName, friendImageUrl, function (idOfNewExclusion) {
+            if(idOfNewExclusion) {
+                res.status(201).end();
+            } else {
+                res.status(500).json({"error": "Gosh, darn it. Don't know what happened."});
+            }
+        });
+    });
+
+    // Resource does not exist - 404 Not Found
+    // Resource already deleted - 410 Gone
+    // Users does not have permission - 403 Forbidden
+    app.delete('/api/v1/friendExclusion/', function(req, res) {
+        console.time().info("[" + Constants.AppName + "] got post delete for /friendExclusion");
+        var userEmail = req.body.userEmail;
+        var friendGoogleUserId = req.body.friendGoogleUserId;
+
+        FriendExclusions.delete(userEmail, friendGoogleUserId, function (numRowsDeleted) {
+            if (numRowsDeleted === 1) {
+                res.status(204).end();
+            } else {
+                res.status(404).end();
+            }
+        });
     });
 
     // https://developer.chrome.com/extensions/runtime#method-setUninstallURL
