@@ -156,10 +156,6 @@ function updateConnectedUsersData(currentUserSocket, userEmail, googleUserId, fr
     connectedUserObj[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
     connectedUsers[userEmail] = connectedUserObj;
 
-    if (dummyUser.shouldAddDummyFriend()) {
-        friendsList['asdffdsa'] = dummyUser.getDummyUserFriendData('asdffdsa');
-        friendsList['asdffdsa2'] = dummyUser.getDummyUserFriendData('asdffdsa2');
-    }
     _friendsMegaList[googleUserId] = friendsList;
     takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, friendsList);
 }
@@ -178,10 +174,6 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
                     friendsWhoInstalledTubePeek[aSocialIdentity.uid] = foundFriend;
                 }
             }
-        }
-        if (dummyUser.shouldAddDummyFriend()) {
-            friendVideosOnYoutubeNow['asdffdsa'] = dummyUser.getConnData('asdffdsa');
-            friendVideosOnYoutubeNow['asdffdsa2'] = dummyUser.getConnData('asdffdsa2');
         }
         sendToUserAndFriends(friendVideosOnYoutubeNow, friendsWhoInstalledTubePeek);
     });
