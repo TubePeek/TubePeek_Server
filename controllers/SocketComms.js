@@ -192,7 +192,6 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
         dataToReplyWith.action = Constants.PossibleActions.takeVideosBeingWatched;
         dataToReplyWith.friendsOnYoutube = friendVideosOnYoutubeNow;
         dataToReplyWith.friendsOnTubePeek = friendsWhoInstalledTubePeek;
-        console.log("friendsOnTubePeek: \n" + JSON.stringify(friendsWhoInstalledTubePeek));
 
         currentUserSocket.emit('message', dataToReplyWith);
         //broadcastOnlineStatus(currentUserSocket, true, userEmail, googleUserId, "room_" + googleUserId);

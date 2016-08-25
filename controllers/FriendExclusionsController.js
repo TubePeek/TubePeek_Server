@@ -29,6 +29,8 @@ var addExclusion = function (req, res) {
                 FriendExclusions.add(userEmail, socialProvider, friendGoogleUserId,
                                     friendFullName, friendImageUrl, function (idOfNewExclusion) {
                     if(idOfNewExclusion) {
+                        // At this point I should add the current user to the exclusions of the friend
+                        // but I am tired.
                         res.status(201).end();
                     } else {
                         res.status(500).json({"error": "Gosh, darn it. Don't know what happened."});
