@@ -53,9 +53,9 @@ var deleteExclusion = function (req, res) {
 
     if (userEmail && friendGoogleUserId) {
         FriendExclusions.delete(userEmail, friendGoogleUserId, function (numRowsDeleted) {
-            if (numRowsDeleted === 1) {
+            if (numRowsDeleted === 1) {//Success
                 res.status(204).end();
-            } else {
+            } else {// Could not find exclusion row to delete. Still a kind of success right?
                 res.status(404).end();
             }
         });

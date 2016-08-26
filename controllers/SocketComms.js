@@ -219,7 +219,7 @@ function addSocketToRooms_AlsoGetActiveFriendVids (currentUserSocket, userEmail,
                 var possibleFriendConnData = connectedUsers[aPossibleFriendUserEmail];
                 var possibleFriendGoogleId = possibleFriendConnData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
 
-                if(myFriendsList[possibleFriendGoogleId] && !myFriendsList[possibleFriendGoogleId].isExcluded) {
+                if(myFriendsList[possibleFriendGoogleId]) {
                     var friendVideo = {};
                     friendVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = possibleFriendConnData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
                     friendVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
@@ -235,7 +235,9 @@ function addSocketToRooms_AlsoGetActiveFriendVids (currentUserSocket, userEmail,
                     var friendSocket = io.sockets.connected[possibleFriendConnData[Constants.CONN_DATA_KEYS.SOCKET_ID]];
                     if(friendSocket) {
                         friendSocket.join(currentUserConnData[Constants.CONN_DATA_KEYS.MY_ROOM]);
-                        currentUserSocket.join(possibleFriendConnData[Constants.CONN_DATA_KEYS.MY_ROOM]);
+                        if(!myFriendsList[possibleFriendGoogleId].isExcluded) {
+                            currentUserSocket.join(possibleFriendConnData[Constants.CONN_DATA_KEYS.MY_ROOM]);
+                        }
                     }
                 }
             }
