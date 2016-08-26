@@ -27,11 +27,6 @@ constants.PossibleActions = {
     userChangedOnlineStatus : 'userChangedOnlineStatus',
     takeFriendOnlineStatus : 'takeFriendOnlineStatus',
 
-    // Not yet. Hopefully, in the next commit
-    // pleaseDisableThisFriend : 'pleaseDisableThisFriend',
-    // pleaseEnableThisFriend: 'pleaseEnableThisFriend',
-    // pleaseAddThisFriendToMyFriendsList : 'pleaseAddThisFriendToMyFriendsList',
-
     changedVideo : 'changedVideo',
     takeFriendVideoChange : 'takeFriendVideoChange',
 

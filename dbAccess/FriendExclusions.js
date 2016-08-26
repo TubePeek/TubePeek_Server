@@ -16,6 +16,14 @@ FriendExclusions.prototype = dbObject;
 
 var friendExclusionsTable = new FriendExclusions('friend_exclusions');
 
+friendExclusionsTable.getExclusionsForUser = function (userEmail, callbackOnResult) {
+    this.knex(this.tableName).where({
+        'email_address': userEmail
+    }).select('*').then(function (results) {
+        callbackOnResult(results);
+    });
+}
+
 friendExclusionsTable.doesExclusionExist = function (userEmail, friendGoogleUserId, callbackOnResult) {
     return this.knex(this.tableName).where({
         'email_address': userEmail,
