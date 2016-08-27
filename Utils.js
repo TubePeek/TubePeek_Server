@@ -4,7 +4,7 @@ var utils = {};
 
 utils.doGet = function (hostParam, pathParam, callback) {
     request(hostParam + pathParam, function (error, response, body) {
-        console.log("Error: " + error + ", response: " + JSON.stringify(response));
+        //console.log("Error: " + error + ", response: " + JSON.stringify(response));
 
         if (!error && response.statusCode == 200) {
             callback(body);
