@@ -5,17 +5,17 @@ var shouldAddDummyFriend = false;
 
 var dummyUserConnData = {};
 
-dummyUserConnData['asdffdsa'] = {};
-dummyUserConnData['asdffdsa2'] = {};
+dummyUserConnData['Dany'] = {};
+dummyUserConnData['Dilan'] = {};
 
-dummyUserConnData['asdffdsa'][Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = 'asdffdsa';
-dummyUserConnData['asdffdsa'][Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
-    videoUrl : 'https://www.youtube.com/watch?v=hB-jBFDCd84',
-    title    : 'My Darkest Days | The REAL Story Of Alpha M.',
-    thumbnail_url : 'https://i.ytimg.com/vi/hB-jBFDCd84/hqdefault.jpg'
+dummyUserConnData['Dany'][Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = 'Dany';
+dummyUserConnData['Dany'][Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
+    videoUrl : 'https://www.youtube.com/watch?v=YmSVji6uzzw',
+    title    : 'Batman Vs Superman Full Movie All Cutscenes - Injustice Gods Among Us',
+    thumbnail_url : 'https://i.ytimg.com/vi/YmSVji6uzzw/hqdefault.jpg'
 };
-dummyUserConnData['asdffdsa2'][Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = 'asdffdsa2';
-dummyUserConnData['asdffdsa2'][Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
+dummyUserConnData['Dilan'][Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = 'Dilan';
+dummyUserConnData['Dilan'][Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
     videoUrl : 'https://www.youtube.com/watch?v=yemQEEPFJBM',
     title    : '17.- Heidegger on "Authenticity"',
     thumbnail_url : 'https://i.ytimg.com/vi/yemQEEPFJBM/hqdefault.jpg'
