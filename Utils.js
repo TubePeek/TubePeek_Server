@@ -4,10 +4,12 @@ var utils = {};
 
 utils.doGet = function (hostParam, pathParam, callback) {
     request(hostParam + pathParam, function (error, response, body) {
+        //console.log("Error: " + error + ", response: " + JSON.stringify(response));
+
         if (!error && response.statusCode == 200) {
             callback(body);
         } else {
-            console.log('[Utils.js] ERROR: ' + error.message);
+            console.log('[Utils.js] ERROR or statusCode NOT 200');
         }
     });
 }
