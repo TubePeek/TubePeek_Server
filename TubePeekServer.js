@@ -2,19 +2,17 @@
 
 var express = require("express");
 //var Hashids = require('hashids');
-var DummyUser = require('./controllers/DummyUser');
-var SocketComms = require('./controllers/SocketComms');
 var Constants = require('./Constants');
+var SocketComms = require('./controllers/SocketComms');
+var DummyUser = require('./controllers/DummyUser');
+var routes = require('./routes');
 
 var scribe = require('scribe-js')();    // if you need to customize scribe.
 var console = process.console;
 
 var app = express();
-configureWebServer();
-var server = app.listen(Constants.SERVER_PORT);
 
-var io = require('socket.io').listen(server);
-setupCommunications();
+configureWebServer();
 
 function configureWebServer() {
     var bodyParser = require('body-parser');
@@ -29,41 +27,20 @@ function configureWebServer() {
     app.engine('html', require('ejs').renderFile);
     //app.set('view engine', 'ejs');
 
-    app.get('/', function(req, res) {
-        res.render('index.html');
-    });
-
-    // https://developer.chrome.com/extensions/runtime#method-setUninstallURL
-    app.get('/uninstall', function(req, res) {
-        res.render('uninstall.html');
-    });
+    routes.init(app, DummyUser, SocketComms, console);
 
     var dbEnvVariable = 'WatchWith_DbEnv';
-    if (process.env[dbEnvVariable] !== undefined) {
-        var dbEnv = process.env[dbEnvVariable];
-        if (dbEnv === 'development') {
-            setupDevEndPoints();
-        }
+    var dbEnv = process.env[dbEnvVariable];
+    if (dbEnv && dbEnv === 'development') {
+        app.use('/logs', scribe.webPanel());
     }
+
+    var server = app.listen(Constants.SERVER_PORT);
+    var io = require('socket.io').listen(server);
+    setupCommunications(io);
 }
 
-function setupDevEndPoints() {
-    app.use('/logs', scribe.webPanel());
-
-    DummyUser.enableDummyUser();
-    app.post('/dummyUserAdmin', function(req, res) {
-        console.time().info("[" + Constants.AppName + "] got post request for /dummyUserAdmin");
-        var userEmail = req.body.userEmail;
-        var ytVideoUrl = req.body.ytVideoUrl;
-        var googleUserId = req.body.googleUserId;
-
-        SocketComms.sendDummyVidChangeToUser(googleUserId, ytVideoUrl, userEmail);
-        res.send("[" + Constants.AppName + "] Response: \n" + googleUserId + ", " + userEmail + ', ' + ytVideoUrl);
-        res.end();
-    });
-}
-
-function setupCommunications() {
+function setupCommunications(io) {
     SocketComms.initialize(console, io, DummyUser);
 
     io.sockets.on('connection', function (socket) {

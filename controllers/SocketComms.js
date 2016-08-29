@@ -2,6 +2,7 @@ var Constants = require('../Constants');
 var Utils = require('../Utils');
 var SocialIdentities = require('../dbAccess/SocialIdentities');
 var UserInfoPersist = require('../dbAccess/UserInfoPersist');
+var FriendExclusions = require('../dbAccess/FriendExclusions');
 
 // Will contain objects, with a userEmail value pointing at an object
 // The object will have keys: 'socketId', 'googleUserId', myRoom', 'videoData'
@@ -80,12 +81,11 @@ socketComm.sendDummyVidChangeToUser = function (googleUserId, ytVideoUrl, userEm
 //--
 function sociallyIdentifyYourself(socketToAClient, messageData) {
     //console.time().info("\nIn sociallyIdentifyYourself! Got social identity!\n" + JSON.stringify(messageData));
+    console.time().info("\n\nGot social identity!\n");
     var authData = messageData.authData;
-    var socialProvider = messageData.provider;
-    var friends = messageData.friends;
 
-    UserInfoPersist.persist(authData, socialProvider, function() {
-        updateConnectedUsersData(socketToAClient, authData.emailAddress, authData.uid, friends);
+    UserInfoPersist.persist(authData, messageData.provider, function() {
+        updateConnectedUsersData(socketToAClient, authData.emailAddress, authData.uid, messageData.friends);
     });
 }
 
@@ -113,32 +113,27 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
 }
 
 function changedVideo (socketToAClient, messageData) {
-    console.time().info("\nIn changedVideo! Got video change: \n" + JSON.stringify(messageData));
     var userEmail = messageData.userEmail;
     var videoUrl = messageData.videoUrl;
+    var pathParam = '/oembed?format=json&url=' + videoUrl;
 
-    var pathParam = '/oembed?format=json&url=' + messageData.videoUrl;
-    Utils.doGet('http://www.youtube.com', pathParam, function(response) {
-        console.time().info("\n\nCool! Got youtube video details:\n" + response + "\n\n");
-        var videoDetails = JSON.parse(response);
+    Utils.doGet('http://www.youtube.com', pathParam, function(youtubeResponse) {
+        var videoDetails = JSON.parse(youtubeResponse);
 
         var currentUser = connectedUsers[userEmail];
         if(currentUser) {
-            currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
-            currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
-            currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
-
+            currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
+                videoUrl : videoUrl,
+                title : videoDetails.title,
+                thumbnail_url : videoDetails.thumbnail_url
+            };
             connectedUsers[userEmail] = currentUser;
             //--
             var dataToBroadcast = {};
             dataToBroadcast.action = Constants.PossibleActions.takeFriendVideoChange;
-            var friendVidChange = {};
-            friendVidChange[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
-            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
-            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].videoUrl = videoUrl;
-            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].title = videoDetails.title;
-            friendVidChange[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = videoDetails.thumbnail_url;
-            dataToBroadcast.friendChangedVideo = friendVidChange;
+            dataToBroadcast.friendChangedVideo = {};
+            dataToBroadcast.friendChangedVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
+            dataToBroadcast.friendChangedVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO];
 
             var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             console.time().info("Room to broadcast to: " + roomToBroadcastTo);
@@ -161,15 +156,19 @@ function updateConnectedUsersData(currentUserSocket, userEmail, googleUserId, fr
     connectedUserObj[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
     connectedUsers[userEmail] = connectedUserObj;
 
-    if (dummyUser.shouldAddDummyFriend()) {
-        friendsList['asdffdsa'] = dummyUser.getDummyUserFriendData('asdffdsa');
-        friendsList['asdffdsa2'] = dummyUser.getDummyUserFriendData('asdffdsa2');
-    }
-    _friendsMegaList[googleUserId] = friendsList;
-    takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, friendsList);
+    FriendExclusions.getExclusionsForUser(userEmail, function(exclusionsForUser) {
+        if (exclusionsForUser && exclusionsForUser.length > 0) {
+            for (var i = 0; i < exclusionsForUser.length; i++) {
+                var anExclusion = exclusionsForUser[i];
+                friendsList[anExclusion.friend_uid].isExcluded = true;
+            }
+        }
+        _friendsMegaList[googleUserId] = friendsList;
+        takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, friendsList);
+    });
 }
 
-function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, friendsList) {
+function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, friendsListWithExclusions) {
     var friendVideosOnYoutubeNow = addSocketToRooms_AlsoGetActiveFriendVids(currentUserSocket, userEmail, googleUserId);
     var friendsWhoInstalledTubePeek = {};
 
@@ -178,17 +177,11 @@ function takeVideosBeingWatched(currentUserSocket, userEmail, googleUserId, frie
             for(var i = 0; i < allSocialIdentities.length; i++) {
                 var aSocialIdentity = allSocialIdentities[i];
 
-                var foundFriend = friendsList[aSocialIdentity.uid];
+                var foundFriend = friendsListWithExclusions[aSocialIdentity.uid];
                 if(foundFriend) {
-                    //console.log("Found a friend who has installed TubePeek.");
                     friendsWhoInstalledTubePeek[aSocialIdentity.uid] = foundFriend;
                 }
             }
-        }
-        console.log("Number of friends on TubePeek: " + Object.keys(friendsWhoInstalledTubePeek).length);
-        if (dummyUser.shouldAddDummyFriend()) {
-            friendVideosOnYoutubeNow['asdffdsa'] = dummyUser.getConnData('asdffdsa');
-            friendVideosOnYoutubeNow['asdffdsa2'] = dummyUser.getConnData('asdffdsa2');
         }
         sendToUserAndFriends(friendVideosOnYoutubeNow, friendsWhoInstalledTubePeek);
     });
@@ -226,7 +219,7 @@ function addSocketToRooms_AlsoGetActiveFriendVids (currentUserSocket, userEmail,
                 var possibleFriendConnData = connectedUsers[aPossibleFriendUserEmail];
                 var possibleFriendGoogleId = possibleFriendConnData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
 
-                if(Utils.isMyGoogleFriend(myFriendsList, possibleFriendGoogleId)) {
+                if(myFriendsList[possibleFriendGoogleId]) {
                     var friendVideo = {};
                     friendVideo[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = possibleFriendConnData[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID];
                     friendVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
@@ -239,14 +232,12 @@ function addSocketToRooms_AlsoGetActiveFriendVids (currentUserSocket, userEmail,
                         friendVideo[Constants.CONN_DATA_KEYS.CURRENT_VIDEO].thumbnail_url = aFriendVidData.thumbnail_url;
                         friendVideosOnYoutube[possibleFriendGoogleId] = friendVideo;
                     }
-
                     var friendSocket = io.sockets.connected[possibleFriendConnData[Constants.CONN_DATA_KEYS.SOCKET_ID]];
                     if(friendSocket) {
-                        var myRoom = currentUserConnData[Constants.CONN_DATA_KEYS.MY_ROOM];
-                        friendSocket.join(myRoom);
-
-                        var myFriendsRoom = possibleFriendConnData[Constants.CONN_DATA_KEYS.MY_ROOM];
-                        currentUserSocket.join(myFriendsRoom);
+                        friendSocket.join(currentUserConnData[Constants.CONN_DATA_KEYS.MY_ROOM]);
+                        if(!myFriendsList[possibleFriendGoogleId].isExcluded) {
+                            currentUserSocket.join(possibleFriendConnData[Constants.CONN_DATA_KEYS.MY_ROOM]);
+                        }
                     }
                 }
             }
