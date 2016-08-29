@@ -30,7 +30,8 @@ userInfoPersist.persist = function(authData, socialProvider, onPersistDoneFunc) 
         }
     });
     var insertSocialIdentityThenIdentifyClient = function (authData, socialProvider, idOfUser) {
-        SocialIdentities.insertSocialIdentify(socialProvider, authData, idOfUser, function() {
+        var createdAt = Utils.dateFormat(new Date(), "%Y-%m-%d %H:%M:%S", true);
+        SocialIdentities.insertSocialIdentify(socialProvider, authData, idOfUser, createdAt, function() {
             console.log("\nSocial identity inserted successfully.");
             onPersistDoneFunc();
         });

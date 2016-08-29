@@ -11,6 +11,7 @@ function SocialIdentities(tableName) {
     this.COLUMNS.FULL_NAME = 'full_name';
     this.COLUMNS.ACCESS_TOKEN = 'access_token';
     this.COLUMNS.EXPIRES_AT = 'expires_at';
+    this.COLUMNS.CREATED_AT = 'created_at';
 }
 
 
@@ -26,7 +27,7 @@ socialIdentitiesTable.findByUIdAndProvider = function(theUId, socialProvider) {
     return dbObject.knex(this.tableName).where(queryObj).select('*');
 }
 
-socialIdentitiesTable.insertSocialIdentify = function(socialProvider, authData, idOfUser, callbackWhenDone) {
+socialIdentitiesTable.insertSocialIdentify = function(socialProvider, authData, idOfUser, createdAt, callbackWhenDone) {
     var socialIdentityInsertObj = {};
     socialIdentityInsertObj[this.COLUMNS.PROVIDER] = socialProvider;
     socialIdentityInsertObj[this.COLUMNS.USER_ID] = idOfUser;
@@ -35,7 +36,8 @@ socialIdentitiesTable.insertSocialIdentify = function(socialProvider, authData, 
     socialIdentityInsertObj[this.COLUMNS.FULL_NAME] = authData.fullName;
     socialIdentityInsertObj[this.COLUMNS.ACCESS_TOKEN] = authData.accessToken;
     socialIdentityInsertObj[this.COLUMNS.EXPIRES_AT] = authData.accessTokenExpiry;
-
+    socialIdentityInsertObj[this.COLUMNS.CREATED_AT] = createdAt;
+    
     this.insert(socialIdentityInsertObj, callbackWhenDone);
 }
 
