@@ -117,11 +117,10 @@ function changedVideo (socketToAClient, messageData) {
     var videoUrl = messageData.videoUrl;
     var pathParam = '/oembed?format=json&url=' + videoUrl;
 
-    Utils.doGet('http://www.youtube.com', pathParam, function(youtubeResponse) {
-        var videoDetails = JSON.parse(youtubeResponse);
-
-        var currentUser = connectedUsers[userEmail];
-        if(currentUser) {
+    var currentUser = connectedUsers[userEmail];
+    if(currentUser) {
+        Utils.doGet('http://www.youtube.com', pathParam, function(youtubeResponse) {
+            var videoDetails = JSON.parse(youtubeResponse);
             currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
                 videoUrl : videoUrl,
                 title : videoDetails.title,
@@ -138,10 +137,10 @@ function changedVideo (socketToAClient, messageData) {
             var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             console.time().info("Room to broadcast to: " + roomToBroadcastTo);
             socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
-        } else {
-            console.time().info("currentUser for : " + userEmail + " is NULL.");
-        }
-    });
+        });
+    } else {
+        console.time().info("currentUser for : " + userEmail + " is NULL.");
+    }
 }
 //- End of core client actions
 
