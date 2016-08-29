@@ -9,7 +9,8 @@ utils.doGet = function (hostParam, pathParam, callback) {
         if (!error && response.statusCode == 200) {
             callback(body);
         } else {
-            console.log('[Utils.js] ERROR or statusCode NOT 200');
+            console.log('[Utils.js] ERROR or statusCode NOT 200. \n'
+                + 'Error: ' + JSON.stringify(error) + ", response: " + JSON.stringify(response));
         }
     });
 }
