@@ -4,6 +4,8 @@ var SocialIdentities = require('../dbAccess/SocialIdentities');
 var UserInfoPersist = require('../dbAccess/UserInfoPersist');
 var FriendExclusions = require('../dbAccess/FriendExclusions');
 
+var MongoDb = require('../dbAccess/MongoDb');
+
 // Will contain objects, with a userEmail value pointing at an object
 // The object will have keys: 'socketId', 'googleUserId', myRoom', 'videoData'
 var connectedUsers = {};
@@ -27,6 +29,7 @@ socketComm.initialize = function(scribeConsole, socketIo, dummy) {
     console = scribeConsole;
     io = socketIo;
     dummyUser = dummy;
+    MongoDb.initialize();
 };
 
 socketComm.handleClientMessage = function(socket, data) {
@@ -54,6 +57,7 @@ socketComm.handleClientDisconnect = function(clientSocket, userEmail, googleUser
 
         delete connectedUsers[userEmail];
         delete _friendsMegaList[googleUserId];
+        //console.log("Is Connected to mongo db: " + MongoDb.isConnected());
 
         console.time().info("\n\nDisconnected User:\n");
         console.time().info("Email: " + userEmail + ", googleUserId: " + googleUserId + "\n\n");
