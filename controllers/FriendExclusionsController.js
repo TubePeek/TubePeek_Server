@@ -24,7 +24,7 @@ var addExclusion = function (req, res) {
     if (userEmail && friendGoogleUserId && socialProvider && friendFullName && friendImageUrl) {
         FriendExclusions.doesExclusionExist(userEmail, friendGoogleUserId, function (yes) {
             if(yes) {
-                res.status(409).end();
+                res.status(409).json({"errorMsg": "Friend exclusion already exists!"});
             } else {
                 FriendExclusions.add(userEmail, socialProvider, friendGoogleUserId,
                                     friendFullName, friendImageUrl, function (idOfNewExclusion) {
@@ -33,13 +33,13 @@ var addExclusion = function (req, res) {
                         // but I am tired.
                         res.status(201).end();
                     } else {
-                        res.status(500).json({"error": "Gosh, darn it. Don't know what happened."});
+                        res.status(500).json({"errorMsg": "Gosh, darn it. Don't know what happened."});
                     }
                 });
             }
         });
     } else { // Bad request
-        res.status(400).end();
+        res.status(400).json({"errorMsg": "Inputs for adding a friend exclusion Not OK!"});
     }
 }
 
@@ -55,12 +55,13 @@ var deleteExclusion = function (req, res) {
         FriendExclusions.delete(userEmail, friendGoogleUserId, function (numRowsDeleted) {
             if (numRowsDeleted === 1) {//Success
                 res.status(204).end();
-            } else {// Could not find exclusion row to delete. Still a kind of success right?
-                res.status(404).end();
+            } else {
+                console.log("Could not find friend exclusion to delete. Still a kind of success right?");
+                res.status(404).json({"errorMsg": "Friend exclusion did not exist and so could not be deleted."});
             }
         });
     } else { // Bad request
-        res.status(400).end();
+        res.status(400).json({"errorMsg": "Input for Friend exclusion deletion Not OK!"});
     }
 }
 
