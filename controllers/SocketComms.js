@@ -116,6 +116,7 @@ function changedVideo (socketToAClient, messageData) {
     var currentUser = connectedUsers[googleUserId];
     if(currentUser) {
         Utils.doGet('http://www.youtube.com', pathParam, function(youtubeResponse) {
+            //console.time().info("Got video details for video change.");
             var videoDetails = JSON.parse(youtubeResponse);
             currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
                 videoUrl : videoUrl,
@@ -128,7 +129,7 @@ function changedVideo (socketToAClient, messageData) {
             dataToBroadcast.action = Constants.PossibleActions.takeFriendVideoChange;
             dataToBroadcast.friendChangedVideo = {
                 googleUserId : currentUser[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID],
-                CURRENT_VIDEO : currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO]
+                videoData : currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO]
             };
             var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
@@ -148,7 +149,7 @@ function updateConnectedUsersData(currentUserSocket, googleUserId, friendsList) 
     connectedUserObj[Constants.CONN_DATA_KEYS.MY_ROOM] = "room_" + googleUserId;
     connectedUserObj[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
     connectedUsers[googleUserId] = connectedUserObj;
-    
+
     FriendExclusions.getExclusionsForUser(googleUserId, function(exclusionsForUser) {
         if (exclusionsForUser && exclusionsForUser.length > 0) {
             for (var i = 0; i < exclusionsForUser.length; i++) {
