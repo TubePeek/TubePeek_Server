@@ -4,7 +4,7 @@ function FriendExclusions(tableName) {
     this.tableName = tableName;
 
     this.COLUMNS = {
-        user_email : 'email_address',
+        my_uid : 'my_uid',
         social_provider : 'social_provider',
         friend_uid : 'friend_uid',
         friend_full_name : 'friend_full_name',
@@ -16,17 +16,17 @@ FriendExclusions.prototype = dbObject;
 
 var friendExclusionsTable = new FriendExclusions('friend_exclusions');
 
-friendExclusionsTable.getExclusionsForUser = function (userEmail, callbackOnResult) {
+friendExclusionsTable.getExclusionsForUser = function (myGoogleUserId, callbackOnResult) {
     this.knex(this.tableName).where({
-        'email_address': userEmail
+        'my_uid': myGoogleUserId
     }).select('*').then(function (results) {
         callbackOnResult(results);
     });
 }
 
-friendExclusionsTable.doesExclusionExist = function (userEmail, friendGoogleUserId, callbackOnResult) {
+friendExclusionsTable.doesExclusionExist = function (myGoogleUserId, friendGoogleUserId, callbackOnResult) {
     return this.knex(this.tableName).where({
-        'email_address': userEmail,
+        'my_uid': myGoogleUserId,
         'friend_uid': friendGoogleUserId,
     }).select('*').then(function (results) {
         console.log("Inside doesExclusionExist! results: " + JSON.stringify(results));
@@ -38,10 +38,10 @@ friendExclusionsTable.doesExclusionExist = function (userEmail, friendGoogleUser
     });
 }
 
-friendExclusionsTable.add = function(userEmail, socialProvider, friendGoogleUserId,
+friendExclusionsTable.add = function(myGoogleUserId, socialProvider, friendGoogleUserId,
     friendFullName, friendImageUrl, callbackOnInsertDone) {
     dbObject.knex.insert({
-        'email_address': userEmail,
+        'my_uid': myGoogleUserId,
         'social_provider': socialProvider,
         'friend_uid': friendGoogleUserId,
         'friend_full_name': friendFullName,
@@ -53,9 +53,9 @@ friendExclusionsTable.add = function(userEmail, socialProvider, friendGoogleUser
     });
 }
 
-friendExclusionsTable.delete = function(userEmail, friendGoogleUserId, callbackOnDeleteDone) {
+friendExclusionsTable.delete = function(myGoogleUserId, friendGoogleUserId, callbackOnDeleteDone) {
     this.knex(this.tableName).where({
-        email_address : userEmail,
+        email_address : myGoogleUserId,
         friend_uid : friendGoogleUserId
     }).del().then(function(theReturn) {
         callbackOnDeleteDone(theReturn);

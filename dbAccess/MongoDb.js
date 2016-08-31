@@ -28,6 +28,21 @@ process.on('SIGINT', function() {
     });
 });
 
+function turnFriendsToList(friendsObj) {
+    var arr = [];
+    for (var prop in friendsObj) {
+        if (friendsObj.hasOwnProperty(prop)) {
+            var friendObj = friendsObj[prop];
+            friendObj.googleUserId = prop;
+            if(friendObj.isExcluded === undefined) {
+                friendObj.isExcluded = false;
+            }
+            arr.push(friendObj);
+        }
+    }
+    return arr; // returns array
+}
+
 
 module.exports = {
     initialize : function () {
@@ -38,14 +53,42 @@ module.exports = {
         return isConnected;
     },
     FriendsList : {
-        add : function (googleUserId, friendsListObj) {
+        add : function (theGoogleUserId, friendsObj, callBackOnInsertDone) {
+            console.log("Inside MongoDb.js ... add function!");
+            var friendsArray = turnFriendsToList(friendsObj);
+            var newFriendsList = new FriendsList ({
+                googleUserId : theGoogleUserId,
+                friends : friendsArray
+            });
 
+            newFriendsList.save(function (err) {
+                if (err) {
+                    // Error may be thrown here because of attempt to insert duplicate document.
+                    // That's ok because the googleUserId has been defined to be unique.
+                    callBackOnInsertDone(false);
+                } else {
+                    callBackOnInsertDone(true);
+                }
+            });
         },
-        get : function (googleUserId) {
-
+        get : function (theGoogleUserId, callBackOnQueryDone) {
+            FriendsList.find({googleUserId: theGoogleUserId}, function(err, queryResult) {
+                if (err) {
+                    callBackOnQueryDone([]);
+                } else {
+                    //console.log("query results: " + JSON.stringify(queryResult));
+                    callBackOnQueryDone(queryResult[0].friends);
+                }
+            });
         },
-        remove : function (googleUserId) {
-
+        remove : function (theGoogleUserId, callBackOnDeleteDone) {
+            FriendsList.findOneAndRemove({googleUserId: theGoogleUserId}, function(err) {
+                if (err) {
+                    callBackOnDeleteDone(false);
+                } else {
+                    callBackOnDeleteDone(true);
+                };
+            });
         }
     }
 };
