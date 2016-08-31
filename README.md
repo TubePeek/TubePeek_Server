@@ -1,6 +1,6 @@
 ### TubePeek_Server
 
-##### Dependencies
+##### Node Dependencies
 ```terminal
 npm install
 ```
@@ -8,21 +8,32 @@ npm install
 ##### Db Environment settings
 Windows
 ```Windows
-Go to your Environment variables and add a System variable with:
+Go to your Environment variables and add a System variable:
 
 name: WatchWith_DbEnv
-and
-value: development | DigitalOceanProduction | HerokuProduction
+value: development | AmazonEc2 | DigitalOceanProduction
 ```
 
 Ubuntu
 ```Ubuntu
 Go into ~/.bashrc and add the below line:
 
-export WatchWith_DbEnv="development" # development | DigitalOceanProduction | HerokuProduction
+export WatchWith_DbEnv="development" # development | AmazonEc2 | DigitalOceanProduction
 
 Now, open a terminal window and run:
 source ~/.bashrc
+```
+
+##### Databases setup
+Postgres and Mongo is required
+
+Create a Postgres database with name 'tubepeekdb' with owner 'postgres'.
+
+Create a mongo database with name 'tubepeekmongodb'.
+
+Start the Mongo server with:
+```terminal
+mongod
 ```
 
 ##### Starting the server
