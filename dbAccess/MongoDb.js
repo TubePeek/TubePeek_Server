@@ -47,7 +47,7 @@ function turnFriendsToList(friendsObj) {
 module.exports = {
     initialize : function () {
         console.log("\nInside MongoDb.js initialize function.\n");
-        mongoose.connect(dbURI);
+        mongoose.connect(dbURI, {server: {auto_reconnect: true}});
     },
     isConnected : function () {
         return isConnected;
