@@ -15,18 +15,18 @@ var friendExclusionsControl = {
 
 var addExclusion = function (req, res) {
     console.time().info("[" + Constants.AppName + "] got post for /friendExclusion");
-    var userEmail = req.body.userEmail;
+    var googleUserId = req.body.googleUserId;
     var friendGoogleUserId = req.body.friendGoogleUserId;
     var socialProvider = req.body.socialProvider;
     var friendFullName = req.body.friendFullName;
     var friendImageUrl = req.body.friendImageUrl;
 
-    if (userEmail && friendGoogleUserId && socialProvider && friendFullName && friendImageUrl) {
-        FriendExclusions.doesExclusionExist(userEmail, friendGoogleUserId, function (yes) {
+    if (googleUserId && friendGoogleUserId && socialProvider && friendFullName && friendImageUrl) {
+        FriendExclusions.doesExclusionExist(googleUserId, friendGoogleUserId, function (yes) {
             if(yes) {
                 res.status(409).json({"errorMsg": "Friend exclusion already exists!"});
             } else {
-                FriendExclusions.add(userEmail, socialProvider, friendGoogleUserId,
+                FriendExclusions.add(googleUserId, socialProvider, friendGoogleUserId,
                                     friendFullName, friendImageUrl, function (idOfNewExclusion) {
                     if(idOfNewExclusion) {
                         // At this point I should add the current user to the exclusions of the friend
@@ -48,11 +48,11 @@ var addExclusion = function (req, res) {
 // Users does not have permission - 403 Forbidden
 var deleteExclusion = function (req, res) {
     console.time().info("[" + Constants.AppName + "] got delete for /friendExclusion");
-    var userEmail = req.body.userEmail;
+    var googleUserId = req.body.googleUserId;
     var friendGoogleUserId = req.body.friendGoogleUserId;
 
-    if (userEmail && friendGoogleUserId) {
-        FriendExclusions.delete(userEmail, friendGoogleUserId, function (numRowsDeleted) {
+    if (googleUserId && friendGoogleUserId) {
+        FriendExclusions.delete(googleUserId, friendGoogleUserId, function (numRowsDeleted) {
             if (numRowsDeleted === 1) {//Success
                 res.status(204).end();
             } else {
@@ -64,6 +64,5 @@ var deleteExclusion = function (req, res) {
         res.status(400).json({"errorMsg": "Input for Friend exclusion deletion Not OK!"});
     }
 }
-
 
 module.exports = friendExclusionsControl;

@@ -11,6 +11,9 @@ constants.SERVER_PORT = 3700;
 constants.API_VERSION_KEY = "version";
 constants.API_VERSION_VALUE = "/api/actions/v1";
 
+//constants.MONGO_SERVER_PORT = 27017;
+constants.MONGO_DB_NAME = "tubepeekmongodb";
+
 // Connection data keys: This is necessary so that I don't use magic strings everywhere
 constants.CONN_DATA_KEYS = {
     SOCKET_ID : 'socketId',
