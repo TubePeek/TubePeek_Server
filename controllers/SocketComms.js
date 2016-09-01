@@ -109,6 +109,7 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
 }
 
 function changedVideo (socketToAClient, messageData) {
+    //console.time().info("Got video change! messageData: \n" + JSON.stringify(messageData));
     var googleUserId = messageData.googleUserId;
     var videoUrl = messageData.videoUrl;
     var pathParam = '/oembed?format=json&url=' + videoUrl;
