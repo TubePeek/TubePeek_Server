@@ -55,7 +55,7 @@ friendExclusionsTable.add = function(myGoogleUserId, socialProvider, friendGoogl
 
 friendExclusionsTable.delete = function(myGoogleUserId, friendGoogleUserId, callbackOnDeleteDone) {
     this.knex(this.tableName).where({
-        email_address : myGoogleUserId,
+        my_uid : myGoogleUserId,
         friend_uid : friendGoogleUserId
     }).del().then(function(theReturn) {
         callbackOnDeleteDone(theReturn);
