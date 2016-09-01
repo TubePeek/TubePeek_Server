@@ -5,6 +5,7 @@ var Constants = require('../Constants');
 //var dbURI = 'mongodb://localhost:' + Constants.MONGO_SERVER_PORT + '/' + Constants.MONGO_DB_NAME;
 var dbURI = 'mongodb://localhost/' + Constants.MONGO_DB_NAME;
 var isConnected =  false;
+mongoose.Promise = global.Promise;
 
 mongoose.connection.on('connected', function () {
     console.log('Mongoose default connection open to ' + dbURI);
