@@ -21,7 +21,7 @@
     "nodemon": "^1.9.2",
     "scribe-js": "^2.0.4"
   },
-  "main": "index.js",
+  "main": "TubePeekServer.js",
   "scripts": {
     "test": "./node_modules/.bin/jasmine-node spec",
     "startdev": "./node_modules/.bin/nodemon TubePeekServer.js",
