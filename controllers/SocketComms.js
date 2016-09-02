@@ -52,11 +52,8 @@ socketComm.handleClientDisconnect = function(clientSocket, googleUserId) {
         clientSocket.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
 
         delete connectedUsers[googleUserId];
-        MongoDb.FriendsList.remove(googleUserId, function (isSuccessful) {
-            console.time().info("MongoDb Friends delete: " + isSuccessful);
-            broadcastOnlineStatus(clientSocket, false, googleUserId, roomToBroadcastTo);
-        });
-        console.time().info("\n\nDisconnected User: googleUserId: " + googleUserId + "\n\n");
+        broadcastOnlineStatus(clientSocket, false, googleUserId, roomToBroadcastTo);
+        console.time().info("\n\nDisconnected User: googleUserId: " + googleUserId + "\n");
     }
 };
 
@@ -77,12 +74,22 @@ socketComm.sendDummyVidChangeToUser = function (googleUserId, ytVideoUrl, userEm
 };
 
 //--
-function sociallyIdentifyYourself(socketToAClient, messageData) {
-    console.time().info("\n\nGot social identity!\n");
+function sociallyIdentifyYourself(clientSocket, messageData) {
+    console.time().info("\nGot social identity!\n");
     var authData = messageData.authData;
 
     UserInfoPersist.persist(authData, messageData.provider, function() {
-        updateConnectedUsersData(socketToAClient, authData.uid, messageData.friends);
+        var googleUserId = authData.uid;
+        clientSocket[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
+
+        var connectedUserObj = {};
+        connectedUserObj[Constants.CONN_DATA_KEYS.SOCKET_ID] = clientSocket.id;
+        connectedUserObj[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
+        connectedUserObj[Constants.CONN_DATA_KEYS.MY_ROOM] = "room_" + googleUserId;
+        connectedUserObj[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
+        connectedUsers[googleUserId] = connectedUserObj;
+
+        getExclusionsAndSendReply(clientSocket, authData.uid, authData.fullName, authData.imageUrl, messageData.friends);
     });
 }
 
@@ -98,10 +105,7 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
             sociallyIdentifyYourself(socketToAClient, messageData);
         } else {
             delete connectedUsers[googleUserId];
-            MongoDb.FriendsList.remove(googleUserId, function (isSuccessful) {
-                console.time().info("MongoDb Friends delete: " + isSuccessful);
-                broadcastOnlineStatus(socketToAClient, false, googleUserId, roomToBroadcastTo);
-            });
+            broadcastOnlineStatus(socketToAClient, false, googleUserId, roomToBroadcastTo);
         }
     } else if(newUserOnlineState) {
         sociallyIdentifyYourself(socketToAClient, messageData);
@@ -117,7 +121,7 @@ function changedVideo (socketToAClient, messageData) {
     var currentUser = connectedUsers[googleUserId];
     if(currentUser) {
         Utils.doGet('http://www.youtube.com', pathParam, function(youtubeResponse) {
-            //console.time().info("Got video details for video change.");
+            // console.time().info("Got video details for video change.");
             var videoDetails = JSON.parse(youtubeResponse);
             currentUser[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {
                 videoUrl : videoUrl,
@@ -141,31 +145,37 @@ function changedVideo (socketToAClient, messageData) {
 }
 //- End of core client actions
 
-function updateConnectedUsersData(currentUserSocket, googleUserId, friendsList) {
-    currentUserSocket[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
-
-    var connectedUserObj = {};
-    connectedUserObj[Constants.CONN_DATA_KEYS.SOCKET_ID] = currentUserSocket.id;
-    connectedUserObj[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = googleUserId;
-    connectedUserObj[Constants.CONN_DATA_KEYS.MY_ROOM] = "room_" + googleUserId;
-    connectedUserObj[Constants.CONN_DATA_KEYS.CURRENT_VIDEO] = {};
-    connectedUsers[googleUserId] = connectedUserObj;
-
+function getExclusionsAndSendReply(currentUserSocket, googleUserId, fullName, imageUrl, friendsList) {
     FriendExclusions.getExclusionsForUser(googleUserId, function(exclusionsForUser) {
         if (exclusionsForUser && exclusionsForUser.length > 0) {
-            for (var i = 0; i < exclusionsForUser.length; i++) {
+            for (var i = 0; i < exclusionsForUser.length; ++i) {
                 var anExclusion = exclusionsForUser[i];
                 friendsList[anExclusion.friend_uid].isExcluded = true;
             }
         }
-        MongoDb.FriendsList.add(googleUserId, friendsList, function (isSuccessful) {
-            console.time().info("MongoDb Friends insert: " + isSuccessful);
-            takeVideosBeingWatched(currentUserSocket, googleUserId, friendsList);
+
+        MongoDb.FriendsList.addBulk(googleUserId, friendsList, function (friendsArrayFromDb) {
+            if(friendsArrayFromDb) {
+                sendVideosBeingWatched(currentUserSocket, googleUserId, fullName, imageUrl,
+                    turnFriendsArrayToObject(friendsArrayFromDb));
+            }
         });
     });
 }
 
-function takeVideosBeingWatched(currentUserSocket, googleUserId, friendsListWithExclusions) {
+function turnFriendsArrayToObject(friendsArray) {
+    var obj = {};
+    for (var i = 0; i < friendsArray.length; ++i) {
+        var friendObj = friendsArray[i];
+        var friendGoogleUserId = friendObj.googleUserId;
+        delete friendObj.googleUserId;
+
+        obj[friendGoogleUserId] = friendObj;
+    }
+    return obj;
+}
+
+function sendVideosBeingWatched(currentUserSocket, googleUserId, fullName, imageUrl, friendsListWithExclusions) {
     var friendVideosOnYoutubeNow = getActiveFriendVids_AddSocketToRooms(currentUserSocket, googleUserId);
     var friendsWhoInstalledTubePeek = {};
 
@@ -180,18 +190,46 @@ function takeVideosBeingWatched(currentUserSocket, googleUserId, friendsListWith
                 }
             }
         }
-        sendToUserAndFriends(friendVideosOnYoutubeNow, friendsWhoInstalledTubePeek);
-    });
 
-    // variable hoisting
-    var sendToUserAndFriends = function (friendVideosOnYoutubeNow, friendsWhoInstalledTubePeek) {
         var dataToReplyWith = {};
         dataToReplyWith.action = Constants.PossibleActions.takeVideosBeingWatched;
         dataToReplyWith.friendsOnYoutube = friendVideosOnYoutubeNow;
         dataToReplyWith.friendsOnTubePeek = friendsWhoInstalledTubePeek;
 
         currentUserSocket.emit('message', dataToReplyWith);
+        addNewUserToFriendsListOfFriends(googleUserId, fullName, imageUrl, friendsWhoInstalledTubePeek);
         //broadcastOnlineStatus(currentUserSocket, true, userEmail, googleUserId, "room_" + googleUserId);
+    });
+}
+
+function addNewUserToFriendsListOfFriends (googleUserId, fullName, imageUrl, friendsWhoInstalledTubePeek) {
+    Object.keys(friendsWhoInstalledTubePeek).forEach(function (aFriendGoogleUserId) {
+        MongoDb.FriendsList.doesFriendExist(aFriendGoogleUserId, googleUserId, function (yes) {
+            if (!yes) {
+                addTheFriend(aFriendGoogleUserId);
+            }
+        });
+    });
+    var addTheFriend = function (aFriendGoogleUserId) {
+        MongoDb.FriendsList.addOneFriend(aFriendGoogleUserId, googleUserId, fullName, imageUrl, function (wasInsertOk) {
+            if(wasInsertOk) {
+                var friendConnData = connectedUsers[aFriendGoogleUserId];
+                if (friendConnData) {
+                    var friendSocket = io.sockets.connected[friendConnData[Constants.CONN_DATA_KEYS.SOCKET_ID]];
+
+                    if(friendSocket) {
+                        var dataToSend = {};
+                        dataToSend.action = Constants.PossibleActions.newFriendInstalledTubePeek;
+                        dataToSend.friend = {
+                            googleUserId : aFriendGoogleUserId,
+                            fullName : fullName,
+                            imageUrl : imageUrl,
+                        };
+                        friendSocket.emit('message', dataToSend);
+                    }
+                }
+            }
+        });
     }
 }
 
@@ -214,7 +252,7 @@ function getActiveFriendVids_AddSocketToRooms (currentUserSocket, googleUserId) 
             var friendSocket = io.sockets.connected[friendSocketId];
             if(friendSocket) {
                 friendSocket.join(currentUserRoom);
-                if(!isExcluded) {
+                if(!isExcluded) {// current User will NOT see activity of friend if friend is excluded
                     currentUserSocket.join(friendRoom);
                 }
             }
@@ -226,7 +264,7 @@ function getActiveFriendVids_AddSocketToRooms (currentUserSocket, googleUserId) 
 function getActiveFriendVids (myFriendsList, onEachConnectedFriend) {
     var activeFriendVids = {};
     var numFriends = myFriendsList.length;
-    for(var i = 0; i < numFriends; i++) {
+    for(var i = 0; i < numFriends; ++i) {
         var aFriendGoogleUserId = myFriendsList[i].googleUserId;
 
         var aFriendConnData = connectedUsers[aFriendGoogleUserId];

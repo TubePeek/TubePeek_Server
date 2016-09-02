@@ -27,6 +27,9 @@ constants.PossibleActions = {
     takeMySocialIdentity : 'takeMySocialIdentity',   // The client first sends this to the server
     takeVideosBeingWatched : 'takeVideosBeingWatched',       // The server then sends this to the client
 
+    newFriendInstalledTubePeek : 'newFriendInstalledTubePeek',
+    friendUninstalledTubePeek : 'friendUninstalledTubePeek',
+
     userChangedOnlineStatus : 'userChangedOnlineStatus',
     takeFriendOnlineStatus : 'takeFriendOnlineStatus',
 
