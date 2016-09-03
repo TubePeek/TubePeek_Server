@@ -6,7 +6,7 @@ var FriendExclusions = require('../dbAccess/FriendExclusions');
 
 var MongoDb = require('../dbAccess/MongoDb');
 
-// Will contain objects, with a userEmail value pointing at an object
+// Will contain objects, with a google user id value pointing at an object
 // The object will have keys: 'socketId', 'googleUserId', myRoom', 'videoData'
 var connectedUsers = {};
 
@@ -53,7 +53,7 @@ socketComm.handleClientDisconnect = function(clientSocket, googleUserId) {
 
         delete connectedUsers[googleUserId];
         broadcastOnlineStatus(clientSocket, false, googleUserId, roomToBroadcastTo);
-        console.time().info("\n\nDisconnected User: googleUserId: " + googleUserId + "\n");
+        //console.time().info("\n\nDisconnected User: googleUserId: " + googleUserId + "\n");
     }
 };
 
@@ -139,8 +139,6 @@ function changedVideo (socketToAClient, messageData) {
             var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
         });
-    } else {
-        console.time().info("currentUser for : " + googleUserId + " is NULL.");
     }
 }
 //- End of core client actions
