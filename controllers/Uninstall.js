@@ -6,12 +6,13 @@ var FriendExclusions = require('../dbAccess/FriendExclusions');
 var MongoDb = require('../dbAccess/MongoDb');
 
 var console = null;
+var SocketComms = null;
 
 var uninstallControl = {
-    setup : function (app, scribeConsole) {
+    setup : function (app, scribeConsole, socketComms) {
         console = scribeConsole;
+        SocketComms = socketComms;
 
-        // https://developer.chrome.com/extensions/runtime#method-setUninstallURL
         app.get('/uninstall', doUninstallDance);
     }
 };
@@ -25,6 +26,7 @@ function doUninstallDance (req, res) {
     // First, the user's social identity has to be deleted
     // Then the user's row in the usermaster table has to be deleted
     // The user's friend exclusions need to be deleted
+    
     // The user's friends list need to be deleted from mongodb
     // MongoDb.FriendsList.remove(gId, function (isSuccessful) {
     //     console.time().info("MongoDb Friends delete: " + isSuccessful);
