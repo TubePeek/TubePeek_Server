@@ -27,14 +27,8 @@ function configureWebServer() {
     app.engine('html', require('ejs').renderFile);
     //app.set('view engine', 'ejs');
 
-    routes.init(app, DummyUser, SocketComms, console);
-
-    var dbEnvVariable = 'WatchWith_DbEnv';
-    var dbEnv = process.env[dbEnvVariable];
-    if (dbEnv && dbEnv === 'development') {
-        app.use('/logs', scribe.webPanel());
-    }
-
+    routes.init(app, DummyUser, SocketComms, console, scribe);
+    
     var server = app.listen(Constants.SERVER_PORT);
     var io = require('socket.io').listen(server);
     setupCommunications(io);
