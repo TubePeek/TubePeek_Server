@@ -103,7 +103,7 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
             sociallyIdentifyYourself(socketToAClient, messageData);
         } else {
             delete connectedUsers[googleUserId];
-            
+
             var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             broadcastOnlineStatus(socketToAClient, false, googleUserId, roomToBroadcastTo);
         }
@@ -280,9 +280,9 @@ function getActiveFriendVids (myFriendsList, onEachConnectedFriend) {
                     thumbnail_url : aFriendVidData.thumbnail_url
                 };
                 activeFriendVids[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = aFriendGoogleUserId;
-                onEachConnectedFriend(aFriendConnData[Constants.CONN_DATA_KEYS.SOCKET_ID],
-                    myFriendsList[i].isExcluded, aFriendConnData[Constants.CONN_DATA_KEYS.MY_ROOM]);
             }
+            onEachConnectedFriend(aFriendConnData[Constants.CONN_DATA_KEYS.SOCKET_ID],
+                myFriendsList[i].isExcluded, aFriendConnData[Constants.CONN_DATA_KEYS.MY_ROOM]);
         }
     }
     return activeFriendVids;
