@@ -99,12 +99,12 @@ function userChangedOnlineStatus (socketToAClient, messageData) {
 
     var currentUser = connectedUsers[googleUserId];
     if(currentUser) {
-        var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
-
         if(newUserOnlineState) {
             sociallyIdentifyYourself(socketToAClient, messageData);
         } else {
             delete connectedUsers[googleUserId];
+            
+            var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             broadcastOnlineStatus(socketToAClient, false, googleUserId, roomToBroadcastTo);
         }
     } else if(newUserOnlineState) {
