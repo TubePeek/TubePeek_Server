@@ -23,18 +23,18 @@ constants.CONN_DATA_KEYS = {
 };
 
 constants.PossibleActions = {
-    pleaseIdentifyYourself : 'pleaseIdentifyYourself',       // The server will send this to the client
-    takeMySocialIdentity : 'takeMySocialIdentity',   // The client first sends this to the server
-    takeVideosBeingWatched : 'takeVideosBeingWatched',       // The server then sends this to the client
+    pleaseIdentifyYourself : 'pleaseIdentifyYourself',          // The server will send this to the client
+    takeMySocialIdentity : 'takeMySocialIdentity',              // The client then sends this to the server
+    takeVideosBeingWatched : 'takeVideosBeingWatched',          // The server then sends this to the client
 
-    newFriendInstalledTubePeek : 'newFriendInstalledTubePeek',
-    friendUninstalledTubePeek : 'friendUninstalledTubePeek',
+    newFriendInstalledTubePeek : 'newFriendInstalledTubePeek',  // The server should send this to a user when friend installs TubePeek
+    friendUninstalledTubePeek : 'friendUninstalledTubePeek',    // The server should send this to a user when friend uninstalls TubePeek
 
-    userChangedOnlineStatus : 'userChangedOnlineStatus',
-    takeFriendOnlineStatus : 'takeFriendOnlineStatus',
+    userChangedOnlineStatus : 'userChangedOnlineStatus',        // The client sends this to the server when user changes online state
+    takeFriendOnlineStatus : 'takeFriendOnlineStatus',          // The server sends this to a user when friend changes online state
 
-    changedVideo : 'changedVideo',
-    takeFriendVideoChange : 'takeFriendVideoChange',
+    changedVideo : 'changedVideo',                              // The client sends this to the server when user changes youtube video
+    takeFriendVideoChange : 'takeFriendVideoChange',            // The server sends this to a user when friend changes youtube video
 
     acknowledge : "acknowledge"
 };
