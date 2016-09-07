@@ -12,7 +12,6 @@ var connectedUsers = {};
 
 var console = null;
 var io = null;
-var dummyUser = null;
 
 var socketComm = {};
 
@@ -22,10 +21,9 @@ var clientActionSelector = {
     'changedVideo' : changedVideo
 };
 
-socketComm.initialize = function(scribeConsole, socketIo, dummy) {
+socketComm.initialize = function(scribeConsole, socketIo) {
     console = scribeConsole;
     io = socketIo;
-    dummyUser = dummy;
     MongoDb.initialize();
 };
 
@@ -61,16 +59,6 @@ socketComm.sendRequestForIdentity = function (socket) {
     var initialDataToSend = {};
     initialDataToSend.action = Constants.PossibleActions.pleaseIdentifyYourself;
     socket.emit('message', initialDataToSend);
-};
-
-socketComm.sendDummyVidChangeToUser = function (googleUserId, ytVideoUrl, userEmail) {
-    var userConnData = connectedUsers[userEmail];
-    if (userConnData) {
-        var userSocket = io.sockets.connected[userConnData[Constants.CONN_DATA_KEYS.SOCKET_ID]];
-        if (userSocket) {
-            dummyUser.sendDummyVidChangeToUser(googleUserId, ytVideoUrl, userSocket);
-        }
-    }
 };
 
 //--

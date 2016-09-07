@@ -4,7 +4,6 @@ var express = require("express");
 //var Hashids = require('hashids');
 var Constants = require('./Constants');
 var SocketComms = require('./controllers/SocketComms');
-var DummyUser = require('./controllers/DummyUser');
 var routes = require('./routes');
 
 var scribe = require('scribe-js')();    // if you need to customize scribe.
@@ -27,15 +26,15 @@ function configureWebServer() {
     app.engine('html', require('ejs').renderFile);
     //app.set('view engine', 'ejs');
 
-    routes.init(app, DummyUser, SocketComms, console, scribe);
-    
+    routes.init(app, SocketComms, console, scribe);
+
     var server = app.listen(Constants.SERVER_PORT);
     var io = require('socket.io').listen(server);
     setupCommunications(io);
 }
 
 function setupCommunications(io) {
-    SocketComms.initialize(console, io, DummyUser);
+    SocketComms.initialize(console, io);
 
     io.sockets.on('connection', function (socket) {
         console.time().info("\nGot a client socket.io connection!");
