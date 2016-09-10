@@ -162,29 +162,30 @@ function turnFriendsArrayToObject(friendsArray) {
 }
 
 function sendVideosBeingWatched(currentUserSocket, googleUserId, fullName, imageUrl, friendsListWithExclusions) {
-    var friendVideosOnYoutubeNow = getActiveFriendVids_AddSocketToRooms(currentUserSocket, googleUserId);
-    var friendsWhoInstalledTubePeek = {};
+    getActiveFriendVids_AddSocketToRooms(currentUserSocket, googleUserId, function (friendVideosOnYoutubeNow) {
+        var friendsWhoInstalledTubePeek = {};
 
-    SocialIdentities.findAll(function(allSocialIdentities) {
-        if(allSocialIdentities && allSocialIdentities.length > 0) {
-            for(var i = 0; i < allSocialIdentities.length; i++) {
-                var aSocialIdentity = allSocialIdentities[i];
+        SocialIdentities.findAll(function(allSocialIdentities) {
+            if(allSocialIdentities && allSocialIdentities.length > 0) {
+                for(var i = 0; i < allSocialIdentities.length; i++) {
+                    var aSocialIdentity = allSocialIdentities[i];
 
-                var foundFriend = friendsListWithExclusions[aSocialIdentity.uid];
-                if(foundFriend) {
-                    friendsWhoInstalledTubePeek[aSocialIdentity.uid] = foundFriend;
+                    var foundFriend = friendsListWithExclusions[aSocialIdentity.uid];
+                    if(foundFriend) {
+                        friendsWhoInstalledTubePeek[aSocialIdentity.uid] = foundFriend;
+                    }
                 }
             }
-        }
 
-        var dataToReplyWith = {};
-        dataToReplyWith.action = Constants.PossibleActions.takeVideosBeingWatched;
-        dataToReplyWith.friendsOnYoutube = friendVideosOnYoutubeNow;
-        dataToReplyWith.friendsOnTubePeek = friendsWhoInstalledTubePeek;
+            var dataToReplyWith = {};
+            dataToReplyWith.action = Constants.PossibleActions.takeVideosBeingWatched;
+            dataToReplyWith.friendsOnYoutube = friendVideosOnYoutubeNow;
+            dataToReplyWith.friendsOnTubePeek = friendsWhoInstalledTubePeek;
 
-        currentUserSocket.emit('message', dataToReplyWith);
-        addNewUserToFriendsListOfFriends(googleUserId, fullName, imageUrl, friendsWhoInstalledTubePeek);
-        //broadcastOnlineStatus(currentUserSocket, true, userEmail, googleUserId, "room_" + googleUserId);
+            currentUserSocket.emit('message', dataToReplyWith);
+            addNewUserToFriendsListOfFriends(googleUserId, fullName, imageUrl, friendsWhoInstalledTubePeek);
+            //broadcastOnlineStatus(currentUserSocket, true, userEmail, googleUserId, "room_" + googleUserId);
+        });
     });
 }
 
@@ -228,7 +229,7 @@ function broadcastOnlineStatus(clientSocket, onlineState, googleUserId, roomId) 
     clientSocket.broadcast.to(roomId).emit("message", dataToBroadcast);
 }
 
-function getActiveFriendVids_AddSocketToRooms (currentUserSocket, googleUserId) {
+function getActiveFriendVids_AddSocketToRooms (currentUserSocket, googleUserId, continueWithActiveFriendVids) {
     var activeFriendVids = {};
     var currentUserConnData = connectedUsers[googleUserId];
     var currentUserRoom = currentUserConnData[Constants.CONN_DATA_KEYS.MY_ROOM];
@@ -243,8 +244,8 @@ function getActiveFriendVids_AddSocketToRooms (currentUserSocket, googleUserId) 
                 }
             }
         });
+        continueWithActiveFriendVids(activeFriendVids);
     });
-    return activeFriendVids;
 }
 
 function getActiveFriendVids (myFriendsList, onEachConnectedFriend) {
@@ -254,6 +255,7 @@ function getActiveFriendVids (myFriendsList, onEachConnectedFriend) {
         var aFriendGoogleUserId = myFriendsList[i].googleUserId;
 
         var aFriendConnData = connectedUsers[aFriendGoogleUserId];
+
         if(aFriendConnData) {// If friend is connected now
             var aFriendVidData = aFriendConnData[Constants.CONN_DATA_KEYS.CURRENT_VIDEO];
             var aFriendVideoUrl = aFriendVidData.videoUrl;
@@ -265,7 +267,8 @@ function getActiveFriendVids (myFriendsList, onEachConnectedFriend) {
                     title : aFriendVidData.title,
                     thumbnail_url : aFriendVidData.thumbnail_url
                 };
-                activeFriendVids[Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = aFriendGoogleUserId;
+                //Is this necessary?
+                activeFriendVids[aFriendGoogleUserId][Constants.CONN_DATA_KEYS.GOOGLE_USER_ID] = aFriendGoogleUserId;
             }
             onEachConnectedFriend(aFriendConnData[Constants.CONN_DATA_KEYS.SOCKET_ID],
                 myFriendsList[i].isExcluded, aFriendConnData[Constants.CONN_DATA_KEYS.MY_ROOM]);
