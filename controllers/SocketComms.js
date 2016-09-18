@@ -3,6 +3,7 @@ var Utils = require('../Utils');
 var SocialIdentities = require('../dbAccess/SocialIdentities');
 var UserInfoPersist = require('../dbAccess/UserInfoPersist');
 var FriendExclusions = require('../dbAccess/FriendExclusions');
+var UserVideosPersist = require('../dbAccess/UserVideosPersist');
 
 var MongoDb = require('../dbAccess/MongoDb');
 
@@ -126,6 +127,8 @@ function changedVideo (socketToAClient, messageData) {
             };
             var roomToBroadcastTo = currentUser[Constants.CONN_DATA_KEYS.MY_ROOM];
             socketToAClient.broadcast.to(roomToBroadcastTo).emit("message", dataToBroadcast);
+            //--
+            UserVideosPersist.persist(googleUserId, videoUrl, videoDetails.title);
         });
     }
 }

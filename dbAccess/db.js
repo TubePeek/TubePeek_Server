@@ -1,4 +1,4 @@
-var knexDbConfigs = require('./knexfile.js');
+var knexDbConfigs = require('./knexfile');
 
 var dbEnvVariable = 'WatchWith_DbEnv';
 
