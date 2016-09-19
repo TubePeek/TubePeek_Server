@@ -1,4 +1,4 @@
-var dbAccess = require('../db');
+var dbAccess = require('./_dbConfig');
 
 var DbObject = {};
 
