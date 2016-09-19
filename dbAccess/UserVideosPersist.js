@@ -17,32 +17,25 @@ userVideosPersist.persist = function(googleUserId, videoUrl, videoTitle) {
 
             Videos.findByYoutubeVideoId(youtubeVideoId, function(videosFound) {
                 if(videosFound && videosFound.length > 0) {
-                    var videoId = videosFound[0]['id'];
-                    var findUserVideos = UserVideos.findByUserAndVideoId(userId, videoId);
-
-                    findUserVideos.then(function (userVideosFound) {
-                        if(userVideosFound && userVideosFound.length > 0) {
-                            UserVideos.update(userId, videoId, currentDateTime, function () {});
-                        } else {
-                            UserVideos.insert(userId, videoId, currentDateTime, function () {});
-                        }
-                    });
+                    persistUserVideos(userId, videosFound[0]['id']);
                 } else {
                     Videos.insert(videoUrl, youtubeVideoId, videoTitle, function(videoId) {
-                        var findUserVideos = UserVideos.findByUserAndVideoId(userId, videoId);
-
-                        findUserVideos.then(function (userVideosFound) {
-                            if(userVideosFound && userVideosFound.length > 0) {
-                                UserVideos.update(userId, videoId, currentDateTime, function () {});
-                            } else {
-                                UserVideos.insert(userId, videoId, currentDateTime, function () {});
-                            }
-                        });
+                        persistUserVideos(userId, videoId);
                     });
                 }
             });
         }
     });
+
+    var persistUserVideos = function (userId, videoId) {
+        UserVideos.findByUserAndVideoId(userId, videoId).then(function (userVideosFound) {
+            if(userVideosFound && userVideosFound.length > 0) {
+                UserVideos.update(userId, videoId, currentDateTime);
+            } else {
+                UserVideos.insert(userId, videoId, currentDateTime);
+            }
+        });
+    }
 }
 
 module.exports = userVideosPersist;

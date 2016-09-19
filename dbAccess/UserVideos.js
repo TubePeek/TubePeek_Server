@@ -16,7 +16,7 @@ userVideosTable.findByUserAndVideoId = function(userId, videoId) {
     }).select('*');
 }
 
-userVideosTable.update = function(userId, videoId, currentDateTime, callbackOnUpdateDone) {
+userVideosTable.update = function(userId, videoId, currentDateTime) {
     this.knex(this.tableName).where({
         'user_id' : userId,
         'video_id' : videoId
@@ -25,11 +25,11 @@ userVideosTable.update = function(userId, videoId, currentDateTime, callbackOnUp
         'updated_at' : currentDateTime
     })
     .then(function (count) {
-        callbackOnUpdateDone();
+        // do nothing
     });
 }
 
-userVideosTable.insert = function(userId, videoId, currentDateTime, callbackOnInsertDone) {
+userVideosTable.insert = function(userId, videoId, currentDateTime) {
     this.knex(this.tableName).insert({
         'user_id': userId,
         'video_id': videoId,
@@ -37,7 +37,7 @@ userVideosTable.insert = function(userId, videoId, currentDateTime, callbackOnIn
     })
     .returning('id').into(this.tableName)
     .then(function (id) {
-        callbackOnInsertDone();
+        // do nothing
     });;
 }
 
