@@ -11,14 +11,14 @@ Windows
 Go to your Environment variables and add a System variable:
 
 name: WatchWith_DbEnv
-value: development | AmazonEc2 | DigitalOceanProduction
+value: development | AmazonEc2
 ```
 
 Ubuntu
 ```Ubuntu
 Go into ~/.bashrc and add the below line:
 
-export WatchWith_DbEnv="development" # development | AmazonEc2 | DigitalOceanProduction
+export WatchWith_DbEnv="development" # development | AmazonEc2
 
 Now, open a terminal window and run:
 source ~/.bashrc

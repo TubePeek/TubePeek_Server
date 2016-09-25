@@ -45,4 +45,18 @@ utils.dateFormat = function (date, fstr, utc) {
     });
 }
 
+// https://gist.github.com/takien/4077195
+utils.getIdOfYoutubeVideo = function (videoUrl) {
+    var id = '';
+    videoUrl = videoUrl.replace(/(>|<)/gi,'').split(/(vi\/|v=|\/v\/|youtu\.be\/|\/embed\/)/);
+
+    if(videoUrl[2] !== undefined) {
+        id = videoUrl[2].split(/[^0-9a-z_\-]/i);
+        id = id[0];
+    } else {
+        id = videoUrl;
+    }
+    return id
+}
+
 module.exports = utils;
