@@ -13,7 +13,9 @@ module.exports = {
         app.get('/helloSignCallback', function(req, res) {
             res.render('helloSignCallback.html');
         });
-
+        app.post('/helloSignCallback', function(req, res) {
+            res.render('helloSignCallback.html');
+        });
 
         // var Controllers = [
         //     'Uninstall',
