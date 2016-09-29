@@ -27,7 +27,7 @@ source ~/.bashrc
 ##### Databases setup
 Postgres and Mongo is required
 
-Create a Postgres database with name 'tubepeekdb' with owner 'postgres'.
+Create a Postgres database with name 'tubepeekdb' with owner 'postgres' and password 'asdffdsa'.
 
 Create a mongo database with name 'tubepeekmongodb'.
 
