@@ -69,6 +69,9 @@ http://localhost:3700/logs
   Hence the need for this section. Let's begin.
 - ###### Google Oauth2 scopes
   - https://developers.google.com/identity/protocols/googlescopes
+  - https://developers.google.com/identity/protocols/OAuth2
+  - This may help: https://developers.google.com/api-client-library/javascript/features/authentication
+  - https://developers.google.com/+/web/api/rest/latest/people/list
 
 ##### Further study
 Follow this to understand the database migration things with knex:
