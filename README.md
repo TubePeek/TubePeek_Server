@@ -64,6 +64,12 @@ To view pretty logs during development, access the following address on a browse
 http://localhost:3700/logs
 ```
 
+##### For the Chrome Extension
+  There is no README.md file for the chrome extension cos I think it'll interfere with Chrome loading the extension.
+  Hence the need for this section. Let's begin.
+- ###### Google Oauth2 scopes
+  - https://developers.google.com/identity/protocols/googlescopes
+
 ##### Further study
 Follow this to understand the database migration things with knex:
 
