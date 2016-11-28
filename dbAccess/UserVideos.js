@@ -38,7 +38,7 @@ userVideosTable.insert = function(userId, videoId, currentDateTime) {
     .returning('id').into(this.tableName)
     .then(function (id) {
         // do nothing
-    });;
+    });
 }
 
 module.exports = userVideosTable;

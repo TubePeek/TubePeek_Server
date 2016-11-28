@@ -1,6 +1,7 @@
 
-var FriendExclusions = require('../dbAccess/FriendExclusions');
+var UserFriends = require('../dbAccess/UserFriends');
 var Constants = require('../Constants');
+var Utils = require('../Utils');
 
 var console = null;
 
@@ -17,26 +18,13 @@ var addExclusion = function (req, res) {
     console.time().info("[" + Constants.AppName + "] got post for /friendExclusion");
     var googleUserId = req.body.googleUserId;
     var friendGoogleUserId = req.body.friendGoogleUserId;
-    var socialProvider = req.body.socialProvider;
-    var friendFullName = req.body.friendFullName;
-    var friendImageUrl = req.body.friendImageUrl;
+    console.log("googleUserId: " + googleUserId + ", friendGoogleUserId: " + friendGoogleUserId);
 
-    if (googleUserId && friendGoogleUserId && socialProvider && friendFullName && friendImageUrl) {
-        FriendExclusions.doesExclusionExist(googleUserId, friendGoogleUserId, function (yes) {
-            if(yes) {
-                res.status(409).json({"errorMsg": "Friend exclusion already exists!"});
-            } else {
-                FriendExclusions.add(googleUserId, socialProvider, friendGoogleUserId,
-                                    friendFullName, friendImageUrl, function (idOfNewExclusion) {
-                    if(idOfNewExclusion) {
-                        // At this point I should add the current user to the exclusions of the friend
-                        // but I am tired.
-                        res.status(201).end();
-                    } else {
-                        res.status(500).json({"errorMsg": "Gosh, darn it. Don't know what happened."});
-                    }
-                });
-            }
+    if (googleUserId && friendGoogleUserId) {
+        var currentDateTime = Utils.dateFormat(new Date(), "%Y-%m-%d %H:%M:%S", true);
+        UserFriends.setFriendExclusion(googleUserId, friendGoogleUserId, true, currentDateTime, function () {
+            console.log("Success set friend excluded to true");
+            res.status(201).end();
         });
     } else { // Bad request
         res.status(400).json({"errorMsg": "Inputs for adding a friend exclusion Not OK!"});
@@ -50,15 +38,13 @@ var deleteExclusion = function (req, res) {
     console.time().info("[" + Constants.AppName + "] got delete for /friendExclusion");
     var googleUserId = req.body.googleUserId;
     var friendGoogleUserId = req.body.friendGoogleUserId;
+    console.log("googleUserId: " + googleUserId + ", friendGoogleUserId: " + friendGoogleUserId);
 
     if (googleUserId && friendGoogleUserId) {
-        FriendExclusions.delete(googleUserId, friendGoogleUserId, function (numRowsDeleted) {
-            if (numRowsDeleted === 1) {//Success
-                res.status(204).end();
-            } else {
-                console.log("Could not find friend exclusion to delete. Still a kind of success right?");
-                res.status(404).json({"errorMsg": "Friend exclusion did not exist and so could not be deleted."});
-            }
+        var currentDateTime = Utils.dateFormat(new Date(), "%Y-%m-%d %H:%M:%S", true);
+        UserFriends.setFriendExclusion(googleUserId, friendGoogleUserId, false, currentDateTime, function () {
+            console.log("Successfully set friend excluded to false");
+            res.status(204).end();
         });
     } else { // Bad request
         res.status(400).json({"errorMsg": "Input for Friend exclusion deletion Not OK!"});
