@@ -1,18 +1,10 @@
+
 var knex = require('knex');
+var KnexFile = require('../knexfile');
 
 var knexDbConfigs = {};
-
-knexDbConfigs['development'] = {
-    client: 'pg',
-    connection: {
-        host : '127.0.0.1',
-        user : 'postgres',
-        password : 'asdffdsa',
-        database : 'tubepeekdb'
-    }
-};
-
-knexDbConfigs['AmazonEc2'] = knexDbConfigs['development'];
+knexDbConfigs['development'] = KnexFile['development'];
+knexDbConfigs['AmazonEc2'] = KnexFile['development'];
 
 //--
 
