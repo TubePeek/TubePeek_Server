@@ -13,8 +13,12 @@ userInfoPersist.persist = function(authData, socialProvider, onPersistDoneFunc) 
                 if(identitiesFound.length > 0) {
                     identitiesFound.some(function(anIdentity) {
                         if(anIdentity.provider === socialProvider) {
-                            onPersistDoneFunc();
-                            return true;
+                            var updatedAt = Utils.dateFormat(new Date(), "%Y-%m-%d %H:%M:%S", true);
+                            SocialIdentities.updateSocialIdentify(socialProvider, authData, updatedAt, function() {
+                                console.log("\nSocial identity updated successfully.");
+                                onPersistDoneFunc();
+                                return true;
+                            });
                         }
                     });
                 } else {

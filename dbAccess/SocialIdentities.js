@@ -9,9 +9,12 @@ function SocialIdentities(tableName) {
     this.COLUMNS.PROVIDER = 'provider';
     this.COLUMNS.EMAIL_ADDRESS = 'email_address';
     this.COLUMNS.FULL_NAME = 'full_name';
+    this.COLUMNS.IMAGE_URL = 'image_url';
+
     this.COLUMNS.ACCESS_TOKEN = 'access_token';
     this.COLUMNS.EXPIRES_AT = 'expires_at';
     this.COLUMNS.CREATED_AT = 'created_at';
+    this.COLUMNS.UPDATED_AT = 'updated_at';
 }
 
 
@@ -34,11 +37,34 @@ socialIdentitiesTable.insertSocialIdentify = function(socialProvider, authData, 
     socialIdentityInsertObj[this.COLUMNS.UID] = authData.uid;
     socialIdentityInsertObj[this.COLUMNS.EMAIL_ADDRESS] = authData.emailAddress;
     socialIdentityInsertObj[this.COLUMNS.FULL_NAME] = authData.fullName;
+    socialIdentityInsertObj[this.COLUMNS.IMAGE_URL] = authData.imageUrl;
     socialIdentityInsertObj[this.COLUMNS.ACCESS_TOKEN] = authData.accessToken;
     socialIdentityInsertObj[this.COLUMNS.EXPIRES_AT] = authData.accessTokenExpiry;
     socialIdentityInsertObj[this.COLUMNS.CREATED_AT] = createdAt;
-    
+
     this.insert(socialIdentityInsertObj, callbackWhenDone);
 }
+
+socialIdentitiesTable.updateSocialIdentify = function(socialProvider, authData, updatedAt, callbackWhenDone) {
+    var socialIdentityUpdateObj = {};
+    socialIdentityUpdateObj[this.COLUMNS.EMAIL_ADDRESS] = authData.emailAddress;
+    socialIdentityUpdateObj[this.COLUMNS.FULL_NAME] = authData.fullName;
+    socialIdentityUpdateObj[this.COLUMNS.IMAGE_URL] = authData.imageUrl;
+    socialIdentityUpdateObj[this.COLUMNS.ACCESS_TOKEN] = authData.accessToken;
+    socialIdentityUpdateObj[this.COLUMNS.EXPIRES_AT] = authData.accessTokenExpiry;
+    socialIdentityUpdateObj[this.COLUMNS.UPDATED_AT] = updatedAt;
+
+    var selectQueryObj = {};
+    selectQueryObj[this.COLUMNS.PROVIDER] = socialProvider;
+    selectQueryObj[this.COLUMNS.UID] = authData.uid;
+
+    this.knex(this.tableName).where(selectQueryObj)
+    .update(socialIdentityUpdateObj)
+    .then(function (count) {
+        console.log("Updated social identity: Num rows affected: " + count);
+        callbackWhenDone();
+    });
+}
+
 
 module.exports = socialIdentitiesTable;

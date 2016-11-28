@@ -1,3 +1,5 @@
+/*This file is no longer needed */
+
 var dbObject = require('./DbObject');
 
 function FriendExclusions(tableName) {

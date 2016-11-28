@@ -10,6 +10,12 @@ module.exports = {
         app.get('/', function(req, res) {
             res.render('index.html');
         });
+
+        var ExtensionChromeStoreLink = "https://chrome.google.com/webstore/detail/tubepeek/jgeofmbcmbljdgjefliaeenokgiacncb?hl=en-US&utm_source=chrome-ntp-launcher";
+        app.get('/friend/add/:friendGoogleUserId', function(req, res) {
+            res.redirect(ExtensionChromeStoreLink);
+        });
+
         // var Controllers = [
         //     'Uninstall',
         //     'FriendExclusionsController'
