@@ -44,7 +44,7 @@ var deleteExclusion = function (req, res) {
         var currentDateTime = Utils.dateFormat(new Date(), "%Y-%m-%d %H:%M:%S", true);
         UserFriends.setFriendExclusion(googleUserId, friendGoogleUserId, false, currentDateTime, function () {
             console.log("Successfully set friend excluded to false");
-            res.status(201).end();
+            res.status(204).end();
         });
     } else { // Bad request
         res.status(400).json({"errorMsg": "Input for Friend exclusion deletion Not OK!"});
