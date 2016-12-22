@@ -38,7 +38,7 @@ module.exports = {
   production: {
     client: 'pg',
     connection: {
-      host: 'tubepeekamazonrdsdb.cutj5lmx1hzt.eu-central-1.rds.amazonaws.com'
+      host: 'tubepeekamazonrdsdb.cutj5lmx1hzt.eu-central-1.rds.amazonaws.com',
       database: 'tubepeekdb',
       user:     'postgres',
       password: 'asdffdsa'
