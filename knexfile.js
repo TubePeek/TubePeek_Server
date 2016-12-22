@@ -36,11 +36,12 @@ module.exports = {
   },
 
   production: {
-    client: 'postgresql',
+    client: 'pg',
     connection: {
-      database: 'my_db',
-      user:     'username',
-      password: 'password'
+      host: 'tubepeekamazonrdsdb.cutj5lmx1hzt.eu-central-1.rds.amazonaws.com'
+      database: 'tubepeekdb',
+      user:     'postgres',
+      password: 'asdffdsa'
     },
     pool: {
       min: 2,
